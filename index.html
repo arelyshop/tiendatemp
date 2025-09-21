@@ -177,7 +177,7 @@
                 <div class="md:w-[85%] md:mx-auto">
                     <nav class="grid grid-cols-6 gap-2 text-center items-center py-0.5">
                         <a href="index.html" class="block py-1 px-2 text-gray-800 font-semibold hover:bg-gray-100 rounded-lg transition-colors">Inicio</a>
-                        <a href="https://arelyshop.com/all-products" class="block py-1 px-2 text-gray-800 font-semibold hover:bg-gray-100 rounded-lg transition-colors">Ver Catálogo</a>
+                        <a href="all-products.html" class="block py-1 px-2 text-gray-800 font-semibold hover:bg-gray-100 rounded-lg transition-colors">Ver Catálogo</a>
                         
                         <!-- Categories Dropdown -->
                         <div class="relative" id="desktop-categories-dropdown-container">
@@ -224,7 +224,7 @@
         </div>
         <nav class="p-4 flex-grow overflow-y-auto">
             <a href="index.html" class="block py-3 px-4 text-gray-700 font-medium hover:bg-gray-100 rounded-lg transition-colors">Inicio</a>
-            <a href="https://arelyshop.com/all-products" class="block py-3 px-4 text-gray-700 font-medium hover:bg-gray-100 rounded-lg transition-colors">Ver Catálogo</a>
+            <a href="all-products.html" class="block py-3 px-4 text-gray-700 font-medium hover:bg-gray-100 rounded-lg transition-colors">Ver Catálogo</a>
 
             <!-- Mobile Categories Accordion -->
             <div>
@@ -372,7 +372,7 @@
                     <h3 class="font-bold text-lg mb-4">Categorías</h3>
                     <ul class="space-y-2 text-sm text-gray-400">
                         <li><a href="/" class="hover:underline">Inicio</a></li>
-                        <li><a href="https://arelyshop.com/all-products" class="hover:underline">Productos</a></li>
+                        <li><a href="all-products.html" class="hover:underline">Productos</a></li>
                         <li><a href="/contacto/" class="hover:underline">Contacto</a></li>
                     </ul>
                 </div>
@@ -482,29 +482,17 @@
 
                 // Populate Categories
                 const categoryLinks = categories.map(category => 
-                    `<a href="#" class="block pl-6 pr-4 py-2 text-sm text-gray-700 hover:bg-gray-100 filter-link" data-type="category" data-value="${category}">${category}</a>`
+                    `<a href="all-products.html?category=${encodeURIComponent(category)}" class="block pl-6 pr-4 py-2 text-sm text-gray-700 hover:bg-gray-100">${category}</a>`
                 ).join('');
-                categoryMenuDesktop.innerHTML = categoryLinks;
-                categoryMenuMobile.innerHTML = categoryLinks.replace(/pl-6/g, 'py-2 px-4'); // Adjust padding for mobile
+                if (categoryMenuDesktop) categoryMenuDesktop.innerHTML = categoryLinks;
+                if (categoryMenuMobile) categoryMenuMobile.innerHTML = categoryLinks.replace(/pl-6/g, 'py-2 px-4');
                 
                 // Populate Brands
                 const brandLinks = brands.map(brand => 
-                    `<a href="#" class="block pl-6 pr-4 py-2 text-sm text-gray-700 hover:bg-gray-100 filter-link" data-type="brand" data-value="${brand}">${brand}</a>`
+                    `<a href="all-products.html?brand=${encodeURIComponent(brand)}" class="block pl-6 pr-4 py-2 text-sm text-gray-700 hover:bg-gray-100">${brand}</a>`
                 ).join('');
-                brandMenuDesktop.innerHTML = brandLinks;
-                brandMenuMobile.innerHTML = brandLinks.replace(/pl-6/g, 'py-2 px-4');
-
-                // Add event listeners to all new filter links
-                document.querySelectorAll('.filter-link').forEach(link => {
-                    link.addEventListener('click', (e) => {
-                        e.preventDefault();
-                        const type = e.target.dataset.type;
-                        const value = e.target.dataset.value;
-                        const filteredProducts = allProducts.filter(p => p[type] === value);
-                        displayProducts(filteredProducts);
-                        closeSidenav(); // Close mobile menu on selection
-                    });
-                });
+                if (brandMenuDesktop) brandMenuDesktop.innerHTML = brandLinks;
+                if (brandMenuMobile) brandMenuMobile.innerHTML = brandLinks.replace(/pl-6/g, 'py-2 px-4');
             }
 
 
@@ -945,3 +933,4 @@
     </script>
 </body>
 </html>
+
