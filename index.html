@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Panel de Administración - Arelyshop</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+        /* Custom scrollbar */
+        .custom-scrollbar::-webkit-scrollbar { width: 8px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: #f1f1f1; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: #888; border-radius: 4px; }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #555; }
+    </style>
+</head>
+<body class="bg-gray-100">
+
+    <div class="flex h-screen bg-gray-100">
+        <!-- Sidebar -->
+        <div class="hidden md:flex flex-col w-64 bg-white shadow-lg">
+            <div class="flex items-center justify-center h-16 bg-black">
+                <img src="/images/logo-escritorio.svg" alt="Arelyshop Admin" class="h-10">
+            </div>
+            <div class="flex flex-col flex-grow">
+                <nav class="flex-grow px-4 pb-4">
+                    <a href="#" class="flex items-center mt-4 px-4 py-2 text-white bg-gray-900 rounded-lg">
+                        <svg class="w-6 h-6 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16m-7 6h7"></path></svg>
+                        <span class="font-medium">Gestionar Productos</span>
+                    </a>
+                    <a href="/" class="flex items-center mt-4 px-4 py-2 text-gray-600 hover:bg-gray-200 rounded-lg">
+                         <svg class="w-6 h-6 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"></path></svg>
+                        <span class="font-medium">Ir a la Tienda</span>
+                    </a>
+                </nav>
+            </div>
+        </div>
+
+        <!-- Main content -->
+        <div class="flex flex-col flex-grow">
+            <header class="flex items-center justify-between h-16 bg-white shadow-md px-6">
+                <h1 class="text-xl font-bold text-gray-800">Gestionar Productos</h1>
+            </header>
+
+            <div class="flex-grow p-6 overflow-auto">
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                    
+                    <!-- Product List & Search -->
+                    <div class="lg:col-span-1 bg-white p-6 rounded-lg shadow-md flex flex-col h-[85vh]">
+                        <h2 class="text-2xl font-bold mb-4">Lista de Productos</h2>
+                        <div class="relative mb-4">
+                            <input type="text" id="search-product-input" placeholder="Buscar por nombre o SKU..." class="w-full pl-10 pr-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                             <div class="absolute top-0 left-0 inline-flex items-center justify-center h-full w-10 text-gray-400">
+                                <svg class="h-6 w-6" fill="none" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewBox="0 0 24 24" stroke="currentColor"><path d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+                            </div>
+                        </div>
+                        <div id="product-list" class="flex-grow overflow-y-auto custom-scrollbar pr-2">
+                            <!-- Product items will be injected here -->
+                            <p class="text-gray-500">Cargando productos...</p>
+                        </div>
+                    </div>
+
+                    <!-- Product Form -->
+                    <div class="lg:col-span-2 bg-white p-6 rounded-lg shadow-md h-[85vh] overflow-y-auto custom-scrollbar">
+                        <div class="flex justify-between items-center mb-4">
+                            <h2 id="form-title" class="text-2xl font-bold">Agregar Nuevo Producto</h2>
+                             <button id="new-product-btn" class="text-sm bg-blue-600 text-white font-bold py-2 px-4 rounded-lg hover:bg-blue-700 transition-colors">
+                                + Nuevo Producto
+                            </button>
+                        </div>
+
+                        <form id="product-form">
+                            <input type="hidden" id="id" name="id">
+                            <!-- Form fields -->
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                <div>
+                                    <label for="name" class="block text-gray-700 font-semibold mb-2">Nombre del Producto</label>
+                                    <input type="text" id="name" name="name" class="w-full px-3 py-2 border rounded-lg" required>
+                                </div>
+                                <div>
+                                    <label for="sku" class="block text-gray-700 font-semibold mb-2">SKU</label>
+                                    <div class="flex items-center space-x-2">
+                                        <input type="text" id="sku" name="sku" class="w-full px-3 py-2 border rounded-lg">
+                                        <button type="button" id="suggest-sku-btn" class="text-sm bg-gray-600 text-white font-bold py-2 px-3 rounded-lg hover:bg-gray-700 transition-colors whitespace-nowrap">Sugerir</button>
+                                    </div>
+                                </div>
+                                <div class="md:col-span-2">
+                                    <label for="description" class="block text-gray-700 font-semibold mb-2">Descripción</label>
+                                    <textarea id="description" name="description" rows="4" class="w-full px-3 py-2 border rounded-lg"></textarea>
+                                </div>
+                                <div>
+                                    <label for="sale_price" class="block text-gray-700 font-semibold mb-2">Precio Venta (Bs.)</label>
+                                    <input type="number" step="0.01" id="sale_price" name="sale_price" class="w-full px-3 py-2 border rounded-lg" required>
+                                </div>
+                                <div>
+                                    <label for="discount_price" class="block text-gray-700 font-semibold mb-2">Precio Oferta (Bs.)</label>
+                                    <input type="number" step="0.01" id="discount_price" name="discount_price" class="w-full px-3 py-2 border rounded-lg">
+                                </div>
+                                <div>
+                                    <label for="purchase_price" class="block text-gray-700 font-semibold mb-2">Precio Compra (Bs.)</label>
+                                    <input type="number" step="0.01" id="purchase_price" name="purchase_price" class="w-full px-3 py-2 border rounded-lg">
+                                </div>
+                                <div>
+                                    <label for="wholesale_price" class="block text-gray-700 font-semibold mb-2">Precio Mayoreo (Bs.)</label>
+                                    <input type="number" step="0.01" id="wholesale_price" name="wholesale_price" class="w-full px-3 py-2 border rounded-lg">
+                                </div>
+                                 <div>
+                                    <label for="stock" class="block text-gray-700 font-semibold mb-2">Stock</label>
+                                    <input type="number" id="stock" name="stock" class="w-full px-3 py-2 border rounded-lg" required>
+                                </div>
+                                <div>
+                                    <label for="category-select" class="block text-gray-700 font-semibold mb-2">Categoría</label>
+                                    <select id="category-select" name="category-select" class="w-full px-3 py-2 border rounded-lg">
+                                        <option value="">Seleccionar categoría...</option>
+                                        <option>Cargadores</option>
+                                        <option>Cables & Conectores</option>
+                                        <option>Hubs & Adaptadores</option>
+                                        <option>Powerbanks</option>
+                                        <option>Mochilas & Fundas</option>
+                                        <option>Accesorios para Laptop</option>
+                                        <option>Audio & Video</option>
+                                        <option>Teclados & Mouse</option>
+                                        <option>Organizadores & Neceseres</option>
+                                        <option>Juguetes & Niños</option>
+                                        <option>Herramientas</option>
+                                        <option>Mascotas</option>
+                                        <option value="custom">Otra...</option>
+                                    </select>
+                                    <input type="text" id="category-custom" name="category-custom" class="w-full px-3 py-2 border rounded-lg mt-2 hidden" placeholder="Escribir categoría personalizada">
+                                </div>
+                                 <div>
+                                    <label for="brand-select" class="block text-gray-700 font-semibold mb-2">Marca</label>
+                                    <select id="brand-select" name="brand-select" class="w-full px-3 py-2 border rounded-lg">
+                                        <option value="">Seleccionar marca...</option>
+                                        <option>UGREEN</option>
+                                        <option>BASEUS</option>
+                                        <option>ANKER</option>
+                                        <option>HAVIT</option>
+                                        <option>TP-LINK</option>
+                                        <option>KLIP-XTREME</option>
+                                        <option>DIMAX</option>
+                                        <option>MAONO</option>
+                                        <option>AMAZON</option>
+                                        <option>BOYA</option>
+                                        <option>NETAC</option>
+                                        <option>BLACKVIEW</option>
+                                        <option>ORICO</option>
+                                        <option>BELKIN</option>
+                                        <option>VENTION</option>
+                                        <option>BENFEI</option>
+                                        <option>UNI</option>
+                                        <option>Marca blanca</option>
+                                        <option value="custom">Otra...</option>
+                                    </select>
+                                    <input type="text" id="brand-custom" name="brand-custom" class="w-full px-3 py-2 border rounded-lg mt-2 hidden" placeholder="Escribir marca personalizada">
+                                </div>
+                                <div>
+                                    <label for="barcode" class="block text-gray-700 font-semibold mb-2">Código de Barras</label>
+                                    <input type="text" id="barcode" name="barcode" class="w-full px-3 py-2 border rounded-lg">
+                                </div>
+                                 <div class="md:col-span-2">
+                                    <label class="block text-gray-700 font-semibold mb-2">URLs de las Fotos</label>
+                                    <div class="space-y-2">
+                                        <input type="url" id="photo_url_1" name="photo_url_1" placeholder="URL Foto 1 (Principal)" class="w-full px-3 py-2 border rounded-lg">
+                                        <input type="url" id="photo_url_2" name="photo_url_2" placeholder="URL Foto 2" class="w-full px-3 py-2 border rounded-lg">
+                                        <input type="url" id="photo_url_3" name="photo_url_3" placeholder="URL Foto 3" class="w-full px-3 py-2 border rounded-lg">
+                                        <input type="url" id="photo_url_4" name="photo_url_4" placeholder="URL Foto 4" class="w-full px-3 py-2 border rounded-lg">
+                                        <input type="url" id="photo_url_5" name="photo_url_5" placeholder="URL Foto 5" class="w-full px-3 py-2 border rounded-lg">
+                                        <input type="url" id="photo_url_6" name="photo_url_6" placeholder="URL Foto 6" class="w-full px-3 py-2 border rounded-lg">
+                                        <input type="url" id="photo_url_7" name="photo_url_7" placeholder="URL Foto 7" class="w-full px-3 py-2 border rounded-lg">
+                                        <input type="url" id="photo_url_8" name="photo_url_8" placeholder="URL Foto 8" class="w-full px-3 py-2 border rounded-lg">
+                                    </div>
+                                </div>
+                            </div>
+                            <!-- Action Buttons -->
+                            <div class="mt-8 flex items-center justify-between">
+                                <button id="save-btn" type="submit" class="bg-blue-600 text-white font-bold py-3 px-6 rounded-lg hover:bg-blue-700 transition-colors">
+                                    Guardar Producto
+                                </button>
+                                <button id="delete-btn" type="button" class="hidden bg-red-600 text-white font-bold py-3 px-6 rounded-lg hover:bg-red-700 transition-colors">
+                                    Eliminar Producto
+                                </button>
+                            </div>
+                        </form>
+                         <div id="status-message" class="mt-4 text-center font-semibold"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <script src="script.js"></script>
+</body>
+</html>
