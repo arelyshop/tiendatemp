@@ -8,6 +8,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const loginBtn = document.getElementById('login-btn');
     
     // --- LÓGICA DE LOGIN ---
+
     const showAdminPanel = () => {
         loginContainer.classList.add('hidden');
         adminPanel.classList.remove('hidden');
@@ -58,6 +59,7 @@ document.addEventListener('DOMContentLoaded', () => {
         window.location.reload();
     });
 
+
     // --- LÓGICA DEL PANEL DE ADMINISTRACIÓN ---
     function initializeAdminLogic() {
         // --- STATE ---
@@ -65,11 +67,10 @@ document.addEventListener('DOMContentLoaded', () => {
         let currentProductId = null;
         let html5QrCode = null;
         let currentScannerTarget = null; 
-        let sortable = null;
 
         // --- ELEMENT SELECTORS ---
         const productForm = document.getElementById('product-form');
-        const productFormContainer = document.getElementById('product-form-container');
+        const productFormContainer = document.getElementById('product-form-container'); // <-- Nuevo selector
         const formTitle = document.getElementById('form-title');
         const productListEl = document.getElementById('product-list');
         const searchInput = document.getElementById('search-product-input');
@@ -77,6 +78,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const saveBtn = document.getElementById('save-btn');
         const deleteBtn = document.getElementById('delete-btn');
         const statusMessageEl = document.getElementById('status-message');
+        const photoUrlInputs = productForm.querySelectorAll('input[type="url"]');
         const suggestSkuBtn = document.getElementById('suggest-sku-btn');
         const skuInput = document.getElementById('sku');
         const categorySelect = document.getElementById('category-select');
@@ -91,85 +93,11 @@ document.addEventListener('DOMContentLoaded', () => {
         const imagePreviewModal = document.getElementById('image-preview-modal');
         const previewImage = document.getElementById('preview-image');
         const closePreviewBtn = document.getElementById('close-preview-btn');
-        const imageUrlList = document.getElementById('image-url-list');
-        const processUrlsBtn = document.getElementById('process-urls-btn');
-        const imageSortableList = document.getElementById('image-sortable-list');
-        const singleImageInputsContainer = document.getElementById('single-image-inputs-container');
-        const addSingleUrlFieldBtn = document.getElementById('add-single-url-field-btn');
+
 
         const API_URL = '/.netlify/functions';
 
         // --- FUNCTIONS ---
-
-        function convertGoogleDriveUrl(url) {
-            if (!url) return '';
-            const regex = /\/file\/d\/([a-zA-Z0-9_-]+)/;
-            const match = url.match(regex);
-            return (match && match[1]) ? `https://lh3.googleusercontent.com/d/${match[1]}=w1000?authuser=0` : url;
-        }
-
-        const addUrlToSorter = (url) => {
-            if (!url) return;
-            // Prevent adding duplicate URLs
-            const existingUrls = Array.from(imageSortableList.querySelectorAll('div[data-url]')).map(div => div.dataset.url);
-            if(existingUrls.includes(url)) {
-                alert('Esta URL ya ha sido agregada.');
-                return;
-            }
-
-            const div = document.createElement('div');
-            div.className = 'flex items-center space-x-3 p-2 bg-gray-600 rounded-md';
-            div.dataset.url = url;
-
-            div.innerHTML = `
-                <svg class="w-6 h-6 text-gray-400 drag-handle" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path></svg>
-                <img src="${url}" onerror="this.onerror=null;this.src='https://placehold.co/40x40/1f2937/9ca3af?text=Err';" class="w-10 h-10 rounded-md object-cover bg-gray-700 cursor-pointer hover:opacity-80 transition-opacity">
-                <p class="flex-grow text-sm text-gray-300 truncate">${url}</p>
-                <button type="button" class="text-xl text-red-400 hover:text-red-300 remove-image-btn">&times;</button>
-            `;
-            
-            div.querySelector('img').addEventListener('click', () => openImagePreview(url));
-            div.querySelector('.remove-image-btn').addEventListener('click', () => div.remove());
-            
-            imageSortableList.appendChild(div);
-        };
-        
-        const createNewSingleImageInput = () => {
-            const wrapper = document.createElement('div');
-            wrapper.className = 'flex items-center space-x-2 single-url-wrapper';
-        
-            wrapper.innerHTML = `
-                <input type="url" class="w-full px-3 py-2 bg-gray-600 border border-gray-500 text-white rounded-lg" placeholder="Pegar URL y hacer clic en Guardar">
-                <button type="button" class="text-sm bg-green-600 text-white font-bold p-2 rounded-lg hover:bg-green-700 transition-colors save-single-url-btn">Guardar</button>
-                <button type="button" class="text-xl text-red-500 font-bold p-1 rounded-lg hover:bg-red-700 transition-colors remove-single-url-btn">&times;</button>
-            `;
-        
-            const input = wrapper.querySelector('input');
-            const saveBtn = wrapper.querySelector('.save-single-url-btn');
-            const removeBtn = wrapper.querySelector('.remove-single-url-btn');
-        
-            const saveUrlAction = () => {
-                const url = convertGoogleDriveUrl(input.value.trim());
-                if (url) {
-                    addUrlToSorter(url);
-                    input.value = ''; // Clear input after adding
-                }
-            };
-            
-            input.addEventListener('keydown', (e) => {
-                if (e.key === 'Enter') {
-                    e.preventDefault();
-                    saveUrlAction();
-                }
-            });
-        
-            saveBtn.addEventListener('click', saveUrlAction);
-            removeBtn.addEventListener('click', () => wrapper.remove());
-        
-            singleImageInputsContainer.appendChild(wrapper);
-            input.focus();
-        };
-
         const fetchAndRenderProducts = async () => {
             try {
                 productListEl.innerHTML = '<p class="text-gray-400">Cargando productos...</p>';
@@ -218,15 +146,16 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
             }
 
-            const imageUrls = [];
             for (let i = 1; i <= 8; i++) {
-                if(product[`photo_url_${i}`]) {
-                    imageUrls.push(product[`photo_url_${i}`]);
+                const urlInput = document.getElementById(`photo_url_${i}`);
+                const thumbnail = document.getElementById(`thumbnail-${i}`);
+                if (urlInput.value) {
+                    thumbnail.src = urlInput.value;
+                } else {
+                    thumbnail.src = `https://placehold.co/40x40/1f2937/9ca3af?text=${i}`;
                 }
             }
-            imageSortableList.innerHTML = '';
-            imageUrls.forEach(url => addUrlToSorter(url));
-            
+
             const categoryOptionExists = [...categorySelect.options].some(opt => opt.value === product.category);
             if (product.category && categoryOptionExists) {
                 categorySelect.value = product.category;
@@ -261,10 +190,12 @@ document.addEventListener('DOMContentLoaded', () => {
             statusMessageEl.className = 'mt-4 text-center font-semibold';
             categoryCustomInput.classList.add('hidden');
             brandCustomInput.classList.add('hidden');
-            imageSortableList.innerHTML = '';
-            singleImageInputsContainer.innerHTML = '';
-            createNewSingleImageInput();
-            imageUrlList.value = '';
+
+            for (let i = 1; i <= 8; i++) {
+                const thumbnail = document.getElementById(`thumbnail-${i}`);
+                thumbnail.src = `https://placehold.co/40x40/1f2937/9ca3af?text=${i}`;
+            }
+
             renderProductList(allProducts);
         };
 
@@ -273,35 +204,24 @@ document.addEventListener('DOMContentLoaded', () => {
             saveBtn.disabled = true;
             saveBtn.textContent = 'Guardando...';
             statusMessageEl.textContent = '';
-
             const formData = new FormData(productForm);
             const productData = Object.fromEntries(formData.entries());
-
-            const imageItems = imageSortableList.querySelectorAll('div[data-url]');
-            for (let i = 0; i < 8; i++) {
-                productData[`photo_url_${i + 1}`] = imageItems[i] ? imageItems[i].dataset.url : null;
-            }
-
             productData.category = categorySelect.value === 'custom' ? categoryCustomInput.value : categorySelect.value;
             productData.brand = brandSelect.value === 'custom' ? brandCustomInput.value : brandSelect.value;
             delete productData['category-select'];
             delete productData['category-custom'];
             delete productData['brand-select'];
             delete productData['brand-custom'];
-
             const numericFields = ['sale_price', 'discount_price', 'purchase_price', 'wholesale_price', 'stock'];
             numericFields.forEach(field => {
                 productData[field] = productData[field] === '' ? null : Number(productData[field]);
             });
-
             const isUpdating = !!currentProductId;
             const url = isUpdating ? `${API_URL}/update-product` : `${API_URL}/add-product`;
             const method = isUpdating ? 'PUT' : 'POST';
-
             if(isUpdating) {
                 productData.id = currentProductId;
             }
-
             try {
                 const response = await fetch(url, { method, body: JSON.stringify(productData), headers: { 'Content-Type': 'application/json' } });
                 if (!response.ok) {
@@ -352,6 +272,12 @@ document.addEventListener('DOMContentLoaded', () => {
         };
 
         const handleSearch = () => renderProductList(allProducts);
+
+        function convertGoogleDriveUrl(url) {
+            const regex = /\/file\/d\/([a-zA-Z0-9_-]+)/;
+            const match = url.match(regex);
+            return (match && match[1]) ? `https://lh3.googleusercontent.com/d/${match[1]}=w1000?authuser=0` : url;
+        }
 
         function suggestSku() {
             const prefix = "ASP";
@@ -410,7 +336,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         function closeImagePreview() {
             imagePreviewModal.classList.add('hidden');
-            previewImage.src = '';
+            previewImage.src = ''; // Clear src to avoid showing old image briefly
         }
 
         // --- EVENT LISTENERS ---
@@ -427,28 +353,46 @@ document.addEventListener('DOMContentLoaded', () => {
             const productElement = event.target.closest('[data-id]');
             if (productElement) {
                 populateFormForEdit(parseInt(productElement.dataset.id, 10));
+                
+                // Si la pantalla es de tamaño móvil (menos de 1024px, el breakpoint 'lg' de Tailwind)
                 if (window.innerWidth < 1024) {
                     productFormContainer.scrollIntoView({ behavior: 'smooth', block: 'start' });
                 }
             }
         });
-
-        processUrlsBtn.addEventListener('click', () => {
-            const urls = imageUrlList.value.split(',')
-                .map(url => convertGoogleDriveUrl(url.trim()))
-                .filter(url => url);
-            urls.forEach(url => addUrlToSorter(url));
-            imageUrlList.value = '';
+        
+        photoUrlInputs.forEach((input, index) => {
+            input.addEventListener('input', (event) => {
+                const originalUrl = event.target.value;
+                let convertedUrl = convertGoogleDriveUrl(originalUrl);
+                
+                if (originalUrl !== convertedUrl) {
+                    event.target.value = convertedUrl;
+                }
+                
+                const thumbnail = document.getElementById(`thumbnail-${index + 1}`);
+                if (convertedUrl) {
+                    thumbnail.src = convertedUrl;
+                } else {
+                    thumbnail.src = `https://placehold.co/40x40/1f2937/9ca3af?text=${index + 1}`;
+                }
+            });
         });
 
-        addSingleUrlFieldBtn.addEventListener('click', createNewSingleImageInput);
+        // Add event listeners for thumbnails to open modal
+        for (let i = 1; i <= 8; i++) {
+            const thumbnail = document.getElementById(`thumbnail-${i}`);
+            thumbnail.addEventListener('click', () => openImagePreview(thumbnail.src));
+        }
 
         closePreviewBtn.addEventListener('click', closeImagePreview);
         imagePreviewModal.addEventListener('click', (e) => {
+            // Close if clicking on the dark overlay, but not on the image itself
             if (e.target === imagePreviewModal) {
                 closeImagePreview();
             }
         });
+
 
         categorySelect.addEventListener('change', (e) => {
             categoryCustomInput.classList.toggle('hidden', e.target.value !== 'custom');
@@ -462,11 +406,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
         // --- INITIALIZATION ---
         fetchAndRenderProducts();
-        createNewSingleImageInput(); // Create the first single image input
-        sortable = new Sortable(imageSortableList, {
-            animation: 150,
-            handle: '.drag-handle',
-            ghostClass: 'sortable-ghost'
-        });
     }
 });
+
