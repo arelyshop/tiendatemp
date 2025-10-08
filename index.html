@@ -6,18 +6,16 @@
     <title>Panel de Administración - Arelyshop</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
-    <script src="https://cdn.jsdelivr.net/npm/sortablejs@latest/Sortable.min.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
         body { font-family: 'Inter', sans-serif; }
+        /* Custom scrollbar for dark mode */
         .custom-scrollbar::-webkit-scrollbar { width: 8px; }
-        .custom-scrollbar::-webkit-scrollbar-track { background: #1a202c; }
-        .custom-scrollbar::-webkit-scrollbar-thumb { background: #4a5568; border-radius: 4px; }
-        .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #718096; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: #1a202c; } /* gray-900 */
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: #4a5568; border-radius: 4px; } /* gray-600 */
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #718096; } /* gray-500 */
         #reader__dashboard_section_csr { display: flex; flex-direction: column; align-items: center; }
         #reader__dashboard_section_csr button { background-color: #4a5568; color: white; padding: 8px 16px; border-radius: 8px; margin-top: 10px; }
-        .sortable-ghost { opacity: 0.4; background: #2d3748; }
-        .drag-handle { cursor: move; }
     </style>
 </head>
 <body class="bg-gray-900 text-gray-300">
@@ -79,6 +77,7 @@
                 <div class="flex-grow p-6 overflow-auto">
                    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
                     
+                    <!-- Product List & Search -->
                     <div class="lg:col-span-1 bg-gray-800 p-6 rounded-lg border border-gray-700 flex flex-col h-[85vh]">
                         <h2 class="text-2xl font-bold mb-4 text-white">Lista de Productos</h2>
                         <div class="relative mb-4">
@@ -92,6 +91,7 @@
                         </div>
                     </div>
 
+                    <!-- Product Form -->
                     <div id="product-form-container" class="lg:col-span-2 bg-gray-800 p-6 rounded-lg border border-gray-700 h-[85vh] overflow-y-auto custom-scrollbar">
                         <div class="flex justify-between items-center mb-4">
                             <h2 id="form-title" class="text-2xl font-bold text-white">Agregar Nuevo Producto</h2>
@@ -193,30 +193,40 @@
                                         </button>
                                     </div>
                                 </div>
-                                <div class="md:col-span-2">
-                                    <label class="block text-gray-300 font-semibold mb-2">Gestión de Fotos</label>
-                                    <div class="bg-gray-700 p-4 rounded-lg space-y-4">
-                                        <div>
-                                            <label for="image-url-list" class="block text-gray-300 text-sm font-semibold mb-2">Pegar lista de URLs (separadas por coma)</label>
-                                            <textarea id="image-url-list" rows="3" class="w-full px-3 py-2 bg-gray-600 border border-gray-500 text-white rounded-lg mb-2" placeholder="https://.../img1.jpg, https://.../img2.jpg"></textarea>
-                                            <button type="button" id="process-urls-btn" class="w-full bg-indigo-600 text-white font-bold py-2 px-4 rounded-lg hover:bg-indigo-700 transition-colors">
-                                                Agregar Fotos desde Lista
-                                            </button>
+                                 <div class="md:col-span-2">
+                                    <label class="block text-gray-300 font-semibold mb-2">URLs de las Fotos</label>
+                                    <div class="space-y-3">
+                                        <div class="flex items-center space-x-3">
+                                            <img id="thumbnail-1" src="https://placehold.co/40x40/1f2937/9ca3af?text=1" onerror="this.onerror=null;this.src='https://placehold.co/40x40/1f2937/9ca3af?text=Err';" alt="Miniatura 1" class="w-10 h-10 rounded-md object-cover bg-gray-700 cursor-pointer hover:opacity-80 transition-opacity">
+                                            <input type="url" id="photo_url_1" name="photo_url_1" placeholder="URL Foto 1 (Principal)" class="w-full px-3 py-2 bg-gray-700 border border-gray-600 text-white rounded-lg">
                                         </div>
-                                        <div>
-                                            <label class="block text-gray-300 text-sm font-semibold mb-2">Agregar URL de foto individualmente</label>
-                                            <div id="single-image-inputs-container" class="space-y-2">
-                                                <!-- Dynamic single URL inputs will be added here -->
-                                            </div>
-                                            <button type="button" id="add-single-url-field-btn" class="mt-2 text-sm bg-gray-600 text-white font-bold py-2 px-4 rounded-lg hover:bg-gray-500 transition-colors w-full">
-                                                + Agregar campo para URL individual
-                                            </button>
+                                        <div class="flex items-center space-x-3">
+                                            <img id="thumbnail-2" src="https://placehold.co/40x40/1f2937/9ca3af?text=2" onerror="this.onerror=null;this.src='https://placehold.co/40x40/1f2937/9ca3af?text=Err';" alt="Miniatura 2" class="w-10 h-10 rounded-md object-cover bg-gray-700 cursor-pointer hover:opacity-80 transition-opacity">
+                                            <input type="url" id="photo_url_2" name="photo_url_2" placeholder="URL Foto 2" class="w-full px-3 py-2 bg-gray-700 border border-gray-600 text-white rounded-lg">
                                         </div>
-                                        <div>
-                                            <label class="block text-gray-300 text-sm font-semibold mb-2">Fotos actuales (Arrastra para reordenar)</label>
-                                            <div id="image-sortable-list" class="space-y-2 min-h-[50px] p-2 bg-gray-900/50 rounded-md">
-                                                <!-- Draggable image items will be injected here -->
-                                            </div>
+                                        <div class="flex items-center space-x-3">
+                                            <img id="thumbnail-3" src="https://placehold.co/40x40/1f2937/9ca3af?text=3" onerror="this.onerror=null;this.src='https://placehold.co/40x40/1f2937/9ca3af?text=Err';" alt="Miniatura 3" class="w-10 h-10 rounded-md object-cover bg-gray-700 cursor-pointer hover:opacity-80 transition-opacity">
+                                            <input type="url" id="photo_url_3" name="photo_url_3" placeholder="URL Foto 3" class="w-full px-3 py-2 bg-gray-700 border border-gray-600 text-white rounded-lg">
+                                        </div>
+                                        <div class="flex items-center space-x-3">
+                                            <img id="thumbnail-4" src="https://placehold.co/40x40/1f2937/9ca3af?text=4" onerror="this.onerror=null;this.src='https://placehold.co/40x40/1f2937/9ca3af?text=Err';" alt="Miniatura 4" class="w-10 h-10 rounded-md object-cover bg-gray-700 cursor-pointer hover:opacity-80 transition-opacity">
+                                            <input type="url" id="photo_url_4" name="photo_url_4" placeholder="URL Foto 4" class="w-full px-3 py-2 bg-gray-700 border border-gray-600 text-white rounded-lg">
+                                        </div>
+                                        <div class="flex items-center space-x-3">
+                                            <img id="thumbnail-5" src="https://placehold.co/40x40/1f2937/9ca3af?text=5" onerror="this.onerror=null;this.src='https://placehold.co/40x40/1f2937/9ca3af?text=Err';" alt="Miniatura 5" class="w-10 h-10 rounded-md object-cover bg-gray-700 cursor-pointer hover:opacity-80 transition-opacity">
+                                            <input type="url" id="photo_url_5" name="photo_url_5" placeholder="URL Foto 5" class="w-full px-3 py-2 bg-gray-700 border border-gray-600 text-white rounded-lg">
+                                        </div>
+                                        <div class="flex items-center space-x-3">
+                                            <img id="thumbnail-6" src="https://placehold.co/40x40/1f2937/9ca3af?text=6" onerror="this.onerror=null;this.src='https://placehold.co/40x40/1f2937/9ca3af?text=Err';" alt="Miniatura 6" class="w-10 h-10 rounded-md object-cover bg-gray-700 cursor-pointer hover:opacity-80 transition-opacity">
+                                            <input type="url" id="photo_url_6" name="photo_url_6" placeholder="URL Foto 6" class="w-full px-3 py-2 bg-gray-700 border border-gray-600 text-white rounded-lg">
+                                        </div>
+                                        <div class="flex items-center space-x-3">
+                                            <img id="thumbnail-7" src="https://placehold.co/40x40/1f2937/9ca3af?text=7" onerror="this.onerror=null;this.src='https://placehold.co/40x40/1f2937/9ca3af?text=Err';" alt="Miniatura 7" class="w-10 h-10 rounded-md object-cover bg-gray-700 cursor-pointer hover:opacity-80 transition-opacity">
+                                            <input type="url" id="photo_url_7" name="photo_url_7" placeholder="URL Foto 7" class="w-full px-3 py-2 bg-gray-700 border border-gray-600 text-white rounded-lg">
+                                        </div>
+                                        <div class="flex items-center space-x-3">
+                                            <img id="thumbnail-8" src="https://placehold.co/40x40/1f2937/9ca3af?text=8" onerror="this.onerror=null;this.src='https://placehold.co/40x40/1f2937/9ca3af?text=Err';" alt="Miniatura 8" class="w-10 h-10 rounded-md object-cover bg-gray-700 cursor-pointer hover:opacity-80 transition-opacity">
+                                            <input type="url" id="photo_url_8" name="photo_url_8" placeholder="URL Foto 8" class="w-full px-3 py-2 bg-gray-700 border border-gray-600 text-white rounded-lg">
                                         </div>
                                     </div>
                                 </div>
@@ -259,3 +269,4 @@
     <script src="script.js"></script>
 </body>
 </html>
+
