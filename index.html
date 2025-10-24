@@ -3,256 +3,1223 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Panel de Administración - Arelyshop</title>
+    <title>Sistema POS - ArelyShop</title>
+    <link rel="icon" type="image/svg+xml" href="https://www.svgrepo.com/show/373594/favicon.svg">
     <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
-    <script src="https://cdn.jsdelivr.net/npm/sortablejs@latest/Sortable.min.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <!-- PDF Generation Libraries -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.23/jspdf.plugin.autotable.min.js"></script>
+    <!-- Barcode Scanner Library -->
+    <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
     <style>
+        html {
+            overflow-y: scroll;
+        }
         body { font-family: 'Inter', sans-serif; }
-        .custom-scrollbar::-webkit-scrollbar { width: 8px; }
-        .custom-scrollbar::-webkit-scrollbar-track { background: #1a202c; }
-        .custom-scrollbar::-webkit-scrollbar-thumb { background: #4a5568; border-radius: 4px; }
-        .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #718096; }
-        #reader__dashboard_section_csr { display: flex; flex-direction: column; align-items: center; }
-        #reader__dashboard_section_csr button { background-color: #4a5568; color: white; padding: 8px 16px; border-radius: 8px; margin-top: 10px; }
-        .sortable-ghost { opacity: 0.4; background: #2d3748; }
-        .drag-handle { cursor: move; }
+        .loader { border: 4px solid #f3f3f3; border-radius: 50%; border-top: 4px solid #3b82f6; width: 24px; height: 24px; animation: spin 1s linear infinite; }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        
+        /* Tab Styling */
+        .tab-button {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 0.5rem 0.25rem;
+            font-size: 0.75rem;
+            line-height: 1rem;
+            text-align: center;
+            flex-grow: 1;
+        }
+        .tab-button svg {
+            width: 24px;
+            height: 24px;
+            margin-bottom: 0.25rem;
+        }
+
+        @media (min-width: 640px) {
+            .tab-button {
+                flex-direction: row;
+                font-size: 0.875rem;
+                line-height: 1.25rem;
+                padding: 0.5rem 0.75rem;
+                flex-grow: 0;
+            }
+            .tab-button svg {
+                margin-bottom: 0;
+                margin-right: 0.5rem;
+            }
+        }
+
+        .tab-inactive { border-color: transparent; color: #6b7280; }
+        .tab-inactive svg { fill: #6b7280; }
+
+        #tab-pos.tab-active { border-color: #2563eb; color: #2563eb; font-weight: 600; }
+        #tab-pos.tab-active svg { fill: #2563eb; }
+
+        #tab-sales-registry.tab-active { border-color: #16a34a; color: #16a34a; font-weight: 600; }
+        #tab-sales-registry.tab-active svg { fill: #16a34a; }
+        
+        .tab-content { display: none; }
+        .copy-btn { background: none; border: none; cursor: pointer; margin-left: 8px; color: #6b7280; }
+        .copy-btn:hover { color: #2c3c53; }
+        #scanner-modal #reader {
+            width: 100%;
+            border-radius: 0.5rem;
+            overflow: hidden;
+        }
+        /* Notification Banner */
+        #notification-banner {
+            transition: transform 0.5s ease-in-out;
+            transform: translateY(-100%);
+        }
     </style>
 </head>
-<body class="bg-gray-900 text-gray-300">
+<body class="bg-gray-100">
 
-    <!-- Main Admin Content -->
-    <div id="admin-panel" class="flex h-screen bg-gray-900">
-        <div class="flex h-full w-full">
-            <!-- Sidebar -->
-            <div class="hidden md:flex flex-col w-64 bg-gray-800 border-r border-gray-700">
-                <div class="flex items-center justify-center h-16 bg-gray-900">
-                    <img src="/images/logo-escritorio.svg" alt="Arelyshop Admin" class="h-10">
+    <!-- Login Screen -->
+    <div id="login-container" class="flex min-h-screen items-center justify-center py-12 px-4 sm:px-6 lg:px-8 bg-gray-900">
+        <div class="max-w-md w-full space-y-8 p-10 rounded-xl shadow-lg border border-gray-700" style="background-color: #202c34;">
+            <div>
+                <img class="mx-auto h-10 sm:h-12 w-auto" src="/images/logo-escritorio.svg" alt="ArelyShop">
+                <div class="flex justify-center mt-4">
+                     <svg xmlns="http://www.w3.org/2000/svg" height="48px" viewBox="0 -960 960 960" width="48px" fill="#e3e3e3"><path d="M480-120v-80h280v-560H480v-80h280q33 0 56.5 23.5T840-760v560q0 33-23.5 56.5T760-120H480Zm-80-160-55-58 102-102H120v-80h327L345-622l55-58 200 200-200 200Z"/></svg>
                 </div>
-                <div class="flex flex-col flex-grow">
-                    <nav class="flex-grow px-4 pb-4">
-                        <a href="#" class="flex items-center mt-4 px-4 py-2 text-white bg-blue-600 rounded-lg">
-                            <svg class="w-6 h-6 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16m-7 6h7"></path></svg>
-                            <span class="font-medium">Gestionar Productos</span>
-                        </a>
-                        <a href="/" class="flex items-center mt-4 px-4 py-2 text-gray-300 hover:bg-gray-700 rounded-lg">
-                            <svg class="w-6 h-6 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"></path></svg>
-                            <span class="font-medium">Ir a la Tienda</span>
-                        </a>
+                <h2 class="mt-4 text-center text-3xl font-extrabold text-gray-100">
+                    Iniciar sesión
+                </h2>
+            </div>
+            <form id="login-form" class="mt-8 space-y-6">
+                <div class="rounded-md shadow-sm -space-y-px">
+                    <div>
+                        <label for="username" class="sr-only">Usuario</label>
+                        <input id="username" name="username" type="text" autocomplete="username" required class="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-600 placeholder-gray-400 text-white bg-gray-700 rounded-t-md focus:outline-none focus:ring-blue-500 focus:border-blue-500 focus:z-10 sm:text-sm" placeholder="Usuario">
+                    </div>
+                    <div>
+                        <label for="password" class="sr-only">Contraseña</label>
+                        <input id="password" name="password" type="password" autocomplete="current-password" required class="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-600 placeholder-gray-400 text-white bg-gray-700 rounded-b-md focus:outline-none focus:ring-blue-500 focus:border-blue-500 focus:z-10 sm:text-sm" placeholder="Contraseña">
+                    </div>
+                </div>
+
+                <div>
+                    <button type="submit" id="login-button" class="group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+                        <span id="login-button-text">Ingresar</span>
+                        <div id="login-loader" class="loader hidden"></div>
+                    </button>
+                </div>
+                <p id="error-message" class="mt-2 text-center text-sm text-red-600"></p>
+            </form>
+        </div>
+    </div>
+
+    <!-- Notification Banner -->
+    <div id="notification-banner" class="fixed top-0 left-0 right-0 p-4 text-white text-center z-50">
+        <span id="notification-message"></span>
+    </div>
+
+    <!-- App Container -->
+    <div id="app-container" class="hidden flex-col min-h-screen">
+        <header class="bg-gray-800 text-white shadow-md">
+            <div class="container mx-auto p-4 flex justify-between items-center">
+                <div class="flex items-center space-x-4">
+                    <img src="/images/logo-escritorio.svg" alt="Logo ArelyShop" class="h-8 sm:h-10">
+                    <h1 class="text-xl font-bold hidden sm:block">Punto de Venta</h1>
+                </div>
+                 <div class="flex items-center space-x-4">
+                    <div id="user-info" class="text-right">
+                         <p class="font-semibold text-sm" id="user-fullname"></p>
+                         <p class="text-xs text-gray-400" id="user-role"></p>
+                    </div>
+                    <button id="logout-button" class="bg-red-600 text-white px-3 py-2 rounded-lg hover:bg-red-700 text-sm flex items-center">
+                        <svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="#e3e3e3" class="mr-1"><path d="M200-120q-33 0-56.5-23.5T120-200v-560q0-33 23.5-56.5T200-840h280v80H200v560h280v80H200Zm440-160-55-58 102-102H360v-80h327L585-622l55-58 200 200-200 200Z"/></svg>
+                        Salir
+                    </button>
+                </div>
+            </div>
+        </header>
+
+        <main class="flex-grow">
+            <div class="container mx-auto p-4 md:p-8">
+                <!-- Tab Navigation -->
+                <div class="mb-8 border-b border-gray-200">
+                    <nav class="flex justify-center space-x-0 sm:space-x-4" aria-label="Tabs">
+                        <button id="tab-pos" class="text-sm font-medium border-b-2 tab-active tab-button">
+                            <svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px"><path d="M280-640q-33 0-56.5-23.5T200-720v-80q0-33 23.5-56.5T280-880h400q33 0 56.5 23.5T760-800v80q0 33-23.5 56.5T680-640H280Zm0-80h400v-80H280v80ZM160-80q-33 0-56.5-23.5T80-160v-40h800v40q0 33-23.5 56.5T800-80H160ZM80-240l139-313q10-22 30-34.5t43-12.5h376q23 0 43 12.5t30 34.5l139 313H80Zm260-80h40q8 0 14-6t6-14q0-8-6-14t-14-6h-40q-8 0-14 6t-6 14q0 8 6 14t14 6Zm0-80h40q8 0 14-6t6-14q0-8-6-14t-14-6h-40q-8 0-14 6t-6 14q0 8 6 14t14 6Zm0-80h40q8 0 14-6t6-14q0-8-6-14t-14-6h-40q-8 0-14 6t-6 14q0 8 6 14t14 6Zm120 160h40q8 0 14-6t6-14q0-8-6-14t-14-6h-40q-8 0-14 6t-6 14q0 8 6 14t14 6Zm0-80h40q8 0 14-6t6-14q0-8-6-14t-14-6h-40q-8 0-14 6t-6 14q0 8 6 14t14 6Zm0-80h40q8 0 14-6t6-14q0-8-6-14t-14-6h-40q-8 0-14 6t-6 14q0 8 6 14t14 6Zm120 160h40q8 0 14-6t6-14q0-8-6-14t-14-6h-40q-8 0-14 6t-6 14q0 8 6 14t14 6Zm0-80h40q8 0 14-6t6-14q0-8-6-14t-14-6h-40q-8 0-14 6t-6 14q0 8 6 14t14 6Zm0-80h40q8 0 14-6t6-14q0-8-6-14t-14-6h-40q-8 0-14 6t-6 14q0 8 6 14t14 6Z"/></svg>
+                            <span>Punto de Venta</span>
+                        </button>
+                        <button id="tab-sales-registry" class="text-sm font-medium border-b-2 tab-inactive tab-button">
+                           <svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px"><path d="M200-120q-33 0-56.5-23.5T120-200v-640h80v640h640v80H200Zm40-120v-360h160v360H240Zm200 0v-560h160v560H440Zm200 0v-200h160v200H640Z"/></svg>
+                            <span>Registro de Ventas</span>
+                        </button>
                     </nav>
                 </div>
-            </div>
 
-            <!-- Main content -->
-            <div class="flex flex-col flex-grow">
-                <header class="flex items-center justify-between h-16 bg-gray-800 border-b border-gray-700 px-6">
-                    <h1 class="text-xl font-bold text-white">Gestionar Productos</h1>
-                </header>
-
-                <div class="flex-grow p-6 overflow-auto">
-                   <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                    
-                    <div id="product-list-container" class="lg:col-span-1 bg-gray-800 p-6 rounded-lg border border-gray-700 flex flex-col lg:h-[85vh]">
-                        <div class="flex justify-between items-center mb-4">
-                            <h2 class="text-2xl font-bold text-white">Lista de Productos</h2>
-                            <button id="new-product-btn" class="text-sm bg-blue-600 text-white font-bold py-2 px-4 rounded-lg hover:bg-blue-700 transition-colors">
-                                + Nuevo Producto
-                            </button>
-                        </div>
-                        <div class="relative mb-4">
-                            <input type="text" id="search-product-input" placeholder="Buscar por nombre, SKU o código..." class="w-full pl-4 pr-12 py-2 bg-gray-700 border border-gray-600 text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
-                             <button id="scan-search-btn" class="absolute top-0 right-0 inline-flex items-center justify-center h-full w-12 text-gray-400 hover:text-white">
-                                <svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="currentColor"><path d="M480-260q75 0 127.5-52.5T660-440q0-75-52.5-127.5T480-620q-75 0-127.5 52.5T300-440q0 75 52.5 127.5T480-260Zm0-80q-42 0-71-29t-29-71q0-42 29-71t71-29q42 0 71 29t29 71q0 42-29 71t-71 29ZM160-120q-33 0-56.5-23.5T80-200v-480q0-33 23.5-56.5T160-760h126l74-80h240l74 80h126q33 0 56.5 23.5T880-680v480q0 33-23.5 56.5T800-120H160Zm0-80h640v-480H638l-73-80H395l-73 80H160v480Zm320-240Z"/></svg>
-                            </button>
-                        </div>
-                        <div id="product-list" class="flex-grow overflow-y-auto custom-scrollbar pr-2">
-                            <p class="text-gray-400">Cargando productos...</p>
-                        </div>
-                    </div>
-
-                    <div id="product-form-container" class="hidden lg:block lg:col-span-2 bg-gray-800 p-6 rounded-lg border border-gray-700 lg:h-[85vh] overflow-y-auto custom-scrollbar">
-                        <div class="flex justify-between items-center mb-4">
-                            <h2 id="form-title" class="text-2xl font-bold text-white">Agregar Nuevo Producto</h2>
-                            <div class="flex items-center space-x-2">
-                                <button type="button" id="back-to-list-btn" class="lg:hidden text-sm bg-gray-600 text-white font-bold py-2 px-4 rounded-lg hover:bg-gray-500 transition-colors hidden">
-                                    &larr; Volver a la Lista
-                                </button>
-                            </div>
-                        </div>
-
-                        <form id="product-form">
-                            <input type="hidden" id="id" name="id">
-                            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                <div>
-                                    <label for="name" class="block text-gray-300 font-semibold mb-2">Nombre del Producto</label>
-                                    <input type="text" id="name" name="name" class="w-full px-3 py-2 bg-gray-700 border border-gray-600 text-white rounded-lg" required>
-                                </div>
-                                <div>
-                                    <label for="sku" class="block text-gray-300 font-semibold mb-2">SKU</label>
-                                    <div class="flex items-center space-x-2">
-                                        <input type="text" id="sku" name="sku" class="w-full px-3 py-2 bg-gray-700 border border-gray-600 text-white rounded-lg">
-                                        <button type="button" id="suggest-sku-btn" class="text-sm bg-gray-600 text-white font-bold py-2 px-3 rounded-lg hover:bg-gray-500 transition-colors whitespace-nowrap">Sugerir</button>
+                <!-- Tab: Point of Sale -->
+                <div id="content-pos" class="tab-content">
+                    <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                        <div class="lg:col-span-2 bg-white rounded-xl shadow-lg overflow-hidden">
+                            <div class="p-6 flex justify-between items-center" style="background-color: #2c3c53; color: white;">
+                                <div class="flex items-center">
+                                    <img src="/images/logo-escritorio.svg" alt="Logo ArelyShop" class="h-10 sm:h-12 mr-4" onerror="this.onerror=null; this.src='https://placehold.co/200x50/e2e8f0/94a3b8?text=ArelyShop';">
+                                    <div class="hidden md:block">
+                                        <h2 class="font-bold text-xl">ArelyShop</h2>
+                                        <p class="text-xs">Santa Cruz de la Sierra, Bolivia</p>
                                     </div>
                                 </div>
-                                <div class="md:col-span-2">
-                                    <label for="description" class="block text-gray-300 font-semibold mb-2">Descripción</label>
-                                    <textarea id="description" name="description" rows="4" class="w-full px-3 py-2 bg-gray-700 border border-gray-600 text-white rounded-lg"></textarea>
+                                <div class="text-right">
+                                    <h3 class="font-bold text-lg">Nota de Venta</h3>
+                                    <p class="text-sm">Nr: <span id="current-sale-id">--</span></p>
+                                    <p class="text-sm">Fecha: <span id="current-date">--/--/----</span></p>
                                 </div>
-                                <div>
-                                    <label for="sale_price" class="block text-gray-300 font-semibold mb-2">Precio Venta (Bs.)</label>
-                                    <input type="number" step="0.01" id="sale_price" name="sale_price" class="w-full px-3 py-2 bg-gray-700 border border-gray-600 text-white rounded-lg" required>
-                                </div>
-                                <div>
-                                    <label for="discount_price" class="block text-gray-300 font-semibold mb-2">Precio Oferta (Bs.)</label>
-                                    <input type="number" step="0.01" id="discount_price" name="discount_price" class="w-full px-3 py-2 bg-gray-700 border border-gray-600 text-white rounded-lg">
-                                </div>
-                                <div>
-                                    <label for="purchase_price" class="block text-gray-300 font-semibold mb-2">Precio Compra (Bs.)</label>
-                                    <input type="number" step="0.01" id="purchase_price" name="purchase_price" class="w-full px-3 py-2 bg-gray-700 border border-gray-600 text-white rounded-lg">
-                                </div>
-                                <div>
-                                    <label for="wholesale_price" class="block text-gray-300 font-semibold mb-2">Precio Mayoreo (Bs.)</label>
-                                    <input type="number" step="0.01" id="wholesale_price" name="wholesale_price" class="w-full px-3 py-2 bg-gray-700 border border-gray-600 text-white rounded-lg">
-                                </div>
-                                 <div>
-                                    <label for="stock" class="block text-gray-300 font-semibold mb-2">Stock</label>
-                                    <input type="number" id="stock" name="stock" class="w-full px-3 py-2 bg-gray-700 border border-gray-600 text-white rounded-lg" required>
-                                </div>
-                                <div>
-                                    <label for="ciudad_sucursal" class="block text-gray-300 font-semibold mb-2">Ciudad/Sucursal</label>
-                                    <select id="ciudad_sucursal" name="ciudad_sucursal" class="w-full px-3 py-2 bg-gray-700 border border-gray-600 text-white rounded-lg">
-                                        <option value="">Seleccionar sucursal...</option>
-                                        <option>Beni</option>
-                                        <option>Sucre</option>
-                                        <option>Cochabamba</option>
-                                        <option>La Paz</option>
-                                        <option>Oruro</option>
-                                        <option>Pando</option>
-                                        <option>Potosí</option>
-                                        <option>Santa Cruz</option>
-                                        <option>El Alto</option>
-                                        <option>Tarija</option>
-                                    </select>
-                                </div>
-                                <div>
-                                    <label for="category-select" class="block text-gray-300 font-semibold mb-2">Categoría</label>
-                                    <select id="category-select" name="category-select" class="w-full px-3 py-2 bg-gray-700 border border-gray-600 text-white rounded-lg">
-                                        <option value="">Seleccionar categoría...</option>
-                                        <option>Cargadores</option>
-                                        <option>Cables & Conectores</option>
-                                        <option>Hubs & Adaptadores</option>
-                                        <option>Powerbanks</option>
-                                        <option>Mochilas & Fundas</option>
-                                        <option>Accesorios para Laptop</option>
-                                        <option>Audio & Video</option>
-                                        <option>Teclados & Mouse</option>
-                                        <option>Organizadores & Neceseres</option>
-                                        <option>Juguetes & Niños</option>
-                                        <option>Herramientas</option>
-                                        <option>Mascotas</option>
-                                        <option value="custom">Otra...</option>
-                                    </select>
-                                    <input type="text" id="category-custom" name="category-custom" class="w-full px-3 py-2 bg-gray-700 border border-gray-600 text-white rounded-lg mt-2 hidden" placeholder="Escribir categoría personalizada">
-                                </div>
-                                 <div>
-                                    <label for="brand-select" class="block text-gray-300 font-semibold mb-2">Marca</label>
-                                    <select id="brand-select" name="brand-select" class="w-full px-3 py-2 bg-gray-700 border border-gray-600 text-white rounded-lg">
-                                        <option value="">Seleccionar marca...</option>
-                                        <option>UGREEN</option>
-                                        <option>BASEUS</option>
-                                        <option>ANKER</option>
-                                        <option>HAVIT</option>
-                                        <option>TP-LINK</option>
-                                        <option>KLIP-XTREME</option>
-                                        <option>DIMAX</option>
-                                        <option>MAONO</option>
-                                        <option>AMAZON</option>
-                                        <option>BOYA</option>
-                                        <option>NETAC</option>
-                                        <option>BLACKVIEW</option>
-                                        <option>ORICO</option>
-                                        <option>BELKIN</option>
-                                        <option>VENTION</option>
-                                        <option>BENFEI</option>
-                                        <option>UNI</option>
-                                        <option>Marca blanca</option>
-                                        <option value="custom">Otra...</option>
-                                    </select>
-                                    <input type="text" id="brand-custom" name="brand-custom" class="w-full px-3 py-2 bg-gray-700 border border-gray-600 text-white rounded-lg mt-2 hidden" placeholder="Escribir marca personalizada">
-                                </div>
-                                <div>
-                                    <label for="barcode" class="block text-gray-300 font-semibold mb-2">Código de Barras</label>
-                                    <div class="flex items-center space-x-2">
-                                        <input type="text" id="barcode" name="barcode" class="w-full px-3 py-2 bg-gray-700 border border-gray-600 text-white rounded-lg">
-                                        <button type="button" id="scan-barcode-btn" class="text-sm bg-gray-600 text-white font-bold p-2.5 rounded-lg hover:bg-gray-500 transition-colors">
-                                           <svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="currentColor"><path d="M480-260q75 0 127.5-52.5T660-440q0-75-52.5-127.5T480-620q-75 0-127.5 52.5T300-440q0 75 52.5 127.5T480-260Zm0-80q-42 0-71-29t-29-71q0-42 29-71t71-29q42 0 71 29t29 71q0 42-29 71t-71 29ZM160-120q-33 0-56.5-23.5T80-200v-480q0-33 23.5-56.5T160-760h126l74-80h240l74 80h126q33 0 56.5 23.5T880-680v480q0 33-23.5 56.5T800-120H160Zm0-80h640v-480H638l-73-80H395l-73 80H160v480Zm320-240Z"/></svg>
+                            </div>
+                            
+                            <div class="p-6">
+                                <div class="relative mb-4">
+                                    <label for="search-product" class="block text-sm font-medium text-gray-700 mb-1">Buscar Producto (Nombre, SKU o Código de Barras)</label>
+                                    <div class="relative flex items-center">
+                                        <input type="text" id="search-product" placeholder="Escanear código o escribir para buscar..." class="w-full px-4 py-2 border border-gray-300 rounded-lg pr-12">
+                                        <button id="scan-pos-btn" class="absolute right-0 top-0 h-full px-3 bg-gray-700 text-white rounded-r-lg hover:bg-gray-800 sm:hidden">
+                                            <svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="#FFFFFF"><path d="M480-260q75 0 127.5-52.5T660-440q0-75-52.5-127.5T480-620q-75 0-127.5 52.5T300-440q0 75 52.5 127.5T480-260Zm0-80q-42 0-71-29t-29-71q0-42 29-71t71-29q42 0 71 29t29 71q0 42-29 71t-71 29ZM160-120q-33 0-56.5-23.5T80-200v-480q0-33 23.5-56.5T160-760h126l74-80h240l74 80h126q33 0 56.5 23.5T880-680v480q0 33-23.5 56.5T800-120H160Zm0-80h640v-480H638l-73-80H395l-73 80H160v480Zm320-240Z"/></svg>
                                         </button>
                                     </div>
+                                    <div id="search-results" class="absolute z-10 w-full bg-white border border-gray-300 rounded-lg mt-1 max-h-60 overflow-y-auto hidden"></div>
                                 </div>
-                                <div class="md:col-span-2">
-                                    <label class="block text-gray-300 font-semibold mb-2">Gestión de Fotos</label>
-                                    <div class="bg-gray-700 p-4 rounded-lg space-y-4">
-                                        <div>
-                                            <label for="image-url-list" class="block text-gray-300 text-sm font-semibold mb-2">Pegar lista de URLs (separadas por coma)</label>
-                                            <textarea id="image-url-list" rows="3" class="w-full px-3 py-2 bg-gray-600 border border-gray-500 text-white rounded-lg mb-2" placeholder="https://.../img1.jpg, https://.../img2.jpg"></textarea>
-                                            <button type="button" id="process-urls-btn" class="w-full bg-indigo-600 text-white font-bold py-2 px-4 rounded-lg hover:bg-indigo-700 transition-colors">
-                                                Agregar Fotos desde Lista
-                                            </button>
-                                        </div>
-                                        <div>
-                                            <label class="block text-gray-300 text-sm font-semibold mb-2">Agregar URL de foto individualmente</label>
-                                            <div id="single-image-inputs-container" class="space-y-2">
-                                                <!-- Dynamic single URL inputs will be added here -->
-                                            </div>
-                                            <button type="button" id="add-single-url-field-btn" class="mt-2 text-sm bg-gray-600 text-white font-bold py-2 px-4 rounded-lg hover:bg-gray-500 transition-colors w-full">
-                                                + Agregar campo para URL individual
-                                            </button>
-                                        </div>
-                                        <div>
-                                            <label class="block text-gray-300 text-sm font-semibold mb-2">Fotos actuales (Arrastra para reordenar)</label>
-                                            <div id="image-sortable-list" class="space-y-2 min-h-[50px] p-2 bg-gray-900/50 rounded-md">
-                                                <!-- Draggable image items will be injected here -->
-                                            </div>
-                                        </div>
-                                    </div>
+                                <h3 class="text-xl font-semibold text-gray-700 mt-6 mb-3">Carrito</h3>
+                                <div class="overflow-x-auto">
+                                    <table class="min-w-full divide-y divide-gray-200">
+                                        <thead class="bg-gray-50">
+                                            <tr>
+                                                <th class="px-2 py-2"></th> <!-- Info button column -->
+                                                <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Producto</th>
+                                                <th class="px-4 py-2 text-center text-xs font-medium text-gray-500 uppercase">Precio Unit.</th>
+                                                <th class="px-4 py-2 text-center text-xs font-medium text-gray-500 uppercase">Cantidad</th>
+                                                <th class="px-4 py-2 text-right text-xs font-medium text-gray-500 uppercase">Subtotal</th>
+                                                <th class="px-2 py-2"></th> <!-- Delete button column -->
+                                            </tr>
+                                        </thead>
+                                        <tbody id="cart-items" class="bg-white divide-y divide-gray-200">
+                                            <tr id="empty-cart-row"><td colspan="6" class="text-center py-8 text-gray-500">El carrito está vacío</td></tr>
+                                        </tbody>
+                                    </table>
                                 </div>
                             </div>
-                            <!-- Action Buttons -->
-                            <div class="mt-8 flex items-center justify-between">
-                                <button id="save-btn" type="submit" class="bg-blue-600 text-white font-bold py-3 px-6 rounded-lg hover:bg-blue-700 transition-colors">
-                                    Guardar Producto
-                                </button>
-                                <button id="delete-btn" type="button" class="hidden bg-red-600 text-white font-bold py-3 px-6 rounded-lg hover:bg-red-700 transition-colors">
-                                    Eliminar Producto
-                                </button>
+                        </div>
+                        <div class="flex flex-col space-y-8">
+                            <div class="bg-white rounded-xl shadow-lg p-6 h-fit">
+                                <h3 class="text-xl font-bold text-gray-800 mb-4">Detalles del Cliente</h3>
+                                <form id="customer-form" class="space-y-4">
+                                    <div><label for="customer-name" class="block text-sm font-medium text-gray-700">Nombre</label><input type="text" id="customer-name" class="mt-1 w-full px-3 py-2 border border-gray-300 rounded-lg"></div>
+                                    <div><label for="customer-contact" class="block text-sm font-medium text-gray-700">Contacto</label><input type="text" id="customer-contact" class="mt-1 w-full px-3 py-2 border border-gray-300 rounded-lg"></div>
+                                    <div><label for="customer-id" class="block text-sm font-medium text-gray-700">NIT/CI</label><input type="text" id="customer-id" class="mt-1 w-full px-3 py-2 border border-gray-300 rounded-lg"></div>
+                                </form>
+                                <div class="border-t border-gray-200 mt-6 pt-6">
+                                    <div class="flex justify-between items-center text-2xl font-bold text-gray-800"><span>TOTAL:</span><span id="total-amount">Bs 0.00</span></div>
+                                    <button id="complete-sale-button" class="mt-6 w-full inline-flex items-center justify-center px-8 py-3 bg-green-600 text-white font-bold rounded-lg hover:bg-green-700 transition duration-200 shadow-lg disabled:bg-gray-400">
+                                        <span id="sale-button-text" class="inline-flex items-center justify-center">
+                                            <svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="#FFFFFF" class="mr-2"><path d="M380-320q-106 0-181-75T124-576q0-102 60-182.5T340-880q22 0 38 10t24 26q-2 10-10.5 32T370-782q-47 31-77 79t-30 107q0 64 43.5 109T412-440h136q8 0 14-6t6-14v-28q0-23 12.5-41.5T614-558q19-11 41-11h45q4 0 7.5 1.5T712-564q3 3 4.5 6.5T720-550v270q0 33-23.5 56.5T640-200H480q-17 0-28.5-11.5T440-240v-80h-60Zm400 80v-160q0-17-11.5-28.5T740-440H614q-19-11-41-11h-45q-4 0-7.5 1.5T516-448q-3 3-4.5 6.5T508-434v114H412q-85 0-145-59.5T207-526q0-68 39-122t103-82q-10-18-10.5-38t6.5-38q-15-8-25.5-22t-10.5-32q-73 53-116.5 135.5T80-576q0 146 92.5 247T380-240h260v80q0 17 11.5 28.5T680-120h80q33 0 56.5-23.5T840-200v-240h-80Z"/></svg>
+                                            Completar Venta y Guardar
+                                        </span>
+                                        <div id="sale-loader" class="loader hidden"></div>
+                                    </button>
+                                    <button id="generate-quote-button" class="mt-2 w-full inline-flex items-center justify-center px-8 py-3 bg-blue-600 text-white font-bold rounded-lg hover:bg-blue-700 transition duration-200 shadow-lg disabled:bg-gray-400">
+                                        <svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="#FFFFFF" class="mr-2"><path d="M240-80q-50 0-85-35t-35-85v-120h120v-560h600v680q0 50-35 85t-85 35H240Zm480-80q17 0 28.5-11.5T760-200v-600H320v480h360v120q0 17 11.5 28.5T720-160ZM360-600v-80h360v80H360Zm0 120v-80h360v80H360ZM240-160h360v-80H200v40q0 17 11.5 28.5T240-160Zm0 0h-40 400-360Z"/></svg>
+                                        Solo Cotización
+                                    </button>
+                                </div>
                             </div>
-                        </form>
-                         <div id="status-message" class="mt-4 text-center font-semibold"></div>
+                            <!-- QR Code Section -->
+                            <div class="bg-white rounded-xl shadow-lg p-6 text-center">
+                                <h3 class="text-xl font-bold text-gray-800 mb-4">Escanea y paga</h3>
+                                <img id="pos-qr-code" src="/images/qr-pago.webp" alt="Código QR para pago" class="w-full h-auto max-w-xs mx-auto rounded-lg cursor-pointer" onclick="showQrModal()" onerror="this.onerror=null; this.src='https://placehold.co/192x192/e2e8f0/94a3b8?text=QR';">
+                            </div>
+                            <!-- Go to Online Store Button (Mobile Only) -->
+                            <div class="lg:hidden">
+                                <a href="https://arelyshop.com/all-products" target="_blank" class="w-full inline-flex items-center justify-center px-8 py-3 bg-gray-700 text-white font-bold rounded-lg hover:bg-gray-800 transition duration-200 shadow-lg">
+                                    <svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="#e3e3e3" class="mr-2"><path d="M841-518v318q0 33-23.5 56.5T761-120H201q-33 0-56.5-23.5T121-200v-318q-23-21-35.5-54t-.5-72l42-136q8-26 28.5-43t47.5-17h556q27 0 47 16.5t29 43.5l42 136q12 39-.5 71T841-518Zm-272-42q27 0 41-18.5t11-41.5l-22-140h-78v148q0 21 14 36.5t34 15.5Zm-180 0q23 0 37.5-15.5T441-612v-148h-78l-22 140q-4 24 10.5 42t37.5 18Zm-178 0q18 0 31.5-13t16.5-33l22-154h-78l-40 134q-6 20 6.5 43t41.5 23Zm540 0q29 0 42-23t6-43l-42-134h-76l22 154q3 20 16.5 33t31.5 13ZM201-200h560v-282q-5 2-6.5 2H751q-27 0-47.5-9T663-518q-18 18-41 28t-49 10q-27 0-50.5-10T481-518q-17 18-39.5 28T393-480q-29 0-52.5-10T299-518q-21 21-41.5 29.5T211-480h-4.5q-2.5 0-5.5-2v282Zm560 0H201h560Z"/></svg>
+                                    Ir a Tienda Online
+                                </a>
+                            </div>
+                        </div>
                     </div>
                 </div>
+
+                <!-- Tab: Sales Registry -->
+                <div id="content-sales-registry" class="tab-content">
+                    <div class="w-full max-w-7xl mx-auto bg-white rounded-xl shadow-lg p-6">
+                        <h2 class="text-2xl font-bold text-gray-800 mb-4">Registro de Ventas</h2>
+                        <input type="text" id="search-sales-input" placeholder="Buscar por Nro. Venta, Cliente, Contacto o Vendedor..." class="w-full px-4 py-2 border border-gray-300 rounded-lg mb-6">
+                        <div id="sales-results-container" class="space-y-4 max-h-[70vh] overflow-y-auto">
+                            <!-- Sales results will be injected here -->
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </main>
+        
+        <footer class="bg-gray-200 text-center p-4">
+            <p class="text-sm text-gray-600">&copy; <span id="current-year"></span> ArelyShop. Todos los derechos reservados.</p>
+        </footer>
+    </div>
+
+    <!-- Product Detail Modal -->
+    <div id="productDetailModal" class="fixed inset-0 bg-gray-800 bg-opacity-75 flex items-center justify-center p-4 hidden z-50">
+        <div class="bg-white p-6 rounded-lg shadow-xl max-w-3xl w-full relative flex flex-col md:flex-row gap-6 max-h-[90vh]">
+            <button id="closeProductModal" class="absolute top-3 right-3 text-gray-500 hover:text-gray-800 text-3xl font-bold z-10">&times;</button>
+            <div class="md:w-1/2 flex items-center justify-center bg-gray-100 rounded-lg">
+                 <img id="modalProductImage" src="" alt="Vista detallada del producto" class="w-full h-auto max-h-[80vh] object-contain rounded-lg" onerror="this.onerror=null; this.src='https://placehold.co/400x400/e2e8f0/94a3b8?text=Sin+Imagen';">
+            </div>
+            <div class="md:w-1/2 flex flex-col py-4 overflow-y-auto">
+                <h2 id="modalProductName" class="text-2xl font-bold text-gray-900 mb-4"></h2>
+                <div class="space-y-3 text-gray-700 text-base">
+                    <p class="flex items-center justify-between"><strong>SKU:</strong> <span class="bg-gray-100 px-2 py-1 rounded"><span id="modalProductSku"></span> <button class="copy-btn" data-copy-target="modalProductSku" title="Copiar SKU"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="currentColor" viewBox="0 0 16 16"><path d="M4 1.5H3a2 2 0 0 0-2 2V14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V3.5a2 2 0 0 0-2-2h-1v1h1a1 1 0 0 1 1 1V14a1 1 0 0 1-1 1H3a1 1 0 0 1-1-1V3.5a1 1 0 0 1 1-1h1v-1z"></path><path d="M9.5 1a.5.5 0 0 1 .5.5v1a.5.5 0 0 1-.5.5h-3a.5.5 0 0 1-.5-.5v-1a.5.5 0 0 1 .5-.5h3zm-3-1A1.5 1.5 0 0 0 5 1.5v1A1.5 1.5 0 0 0 6.5 4h3A1.5 1.5 0 0 0 11 2.5v-1A1.5 1.5 0 0 0 9.5 0h-3z"></path></svg></button></span></p>
+                    <p class="flex items-center justify-between"><strong>Código:</strong> <span class="bg-gray-100 px-2 py-1 rounded"><span id="modalProductCode"></span> <button class="copy-btn" data-copy-target="modalProductCode" title="Copiar Código"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="currentColor" viewBox="0 0 16 16"><path d="M4 1.5H3a2 2 0 0 0-2 2V14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V3.5a2 2 0 0 0-2-2h-1v1h1a1 1 0 0 1 1 1V14a1 1 0 0 1-1 1H3a1 1 0 0 1-1-1V3.5a1 1 0 0 1 1-1h1v-1z"></path><path d="M9.5 1a.5.5 0 0 1 .5.5v1a.5.5 0 0 1-.5.5h-3a.5.5 0 0 1-.5-.5v-1a.5.5 0 0 1 .5-.5h3zm-3-1A1.5 1.5 0 0 0 5 1.5v1A1.5 1.5 0 0 0 6.5 4h3A1.5 1.5 0 0 0 11 2.5v-1A1.5 1.5 0 0 0 9.5 0h-3z"></path></svg></button></span></p>
+                    <p><strong>Sucursal:</strong> <span id="modalProductBranch" class="font-semibold"></span></p>
+                    <p><strong>Stock:</strong> <span id="modalProductStock" class="font-semibold"></span></p>
+                    <div class="mt-4 pt-4 border-t space-y-2">
+                        <p class="flex justify-between"><strong>Precio Regular:</strong> <span id="modalProductPrice" class="font-semibold text-lg text-gray-600"></span></p>
+                        <p id="discountPriceContainer" class="flex justify-between"><strong>Precio Descuento:</strong> <span id="modalProductDiscountPrice" class="font-semibold text-lg text-blue-600"></span></p>
+                        <p class="flex justify-between text-sm"><strong>Precio Compra:</strong> <span id="modalProductPurchasePrice" class="font-semibold"></span></p>
+                        <p class="flex justify-between text-sm"><strong>Precio Mayoreo:</strong> <span id="modalProductWholesalePrice" class="font-semibold"></span></p>
+                    </div>
                 </div>
             </div>
         </div>
     </div>
-    
-    <!-- Barcode Scanner Modal -->
-    <div id="scanner-container" class="fixed inset-0 bg-black bg-opacity-75 flex-col items-center justify-center hidden z-50 p-4">
-        <div class="bg-gray-800 p-6 rounded-lg shadow-lg w-full max-w-md border border-gray-700">
-            <h3 class="text-xl font-bold mb-4 text-center text-white">Escanear Código de Barras</h3>
+
+    <!-- QR Code Modal -->
+    <div id="qrCodeModal" class="fixed inset-0 bg-gray-800 bg-opacity-75 flex items-center justify-center p-4 hidden z-50">
+        <div class="bg-white p-4 rounded-lg shadow-xl max-w-sm w-full relative">
+            <button id="closeQrModal" class="absolute top-2 right-2 text-gray-500 hover:text-gray-800 text-3xl font-bold z-10">&times;</button>
+            <img id="modalQrImage" src="" alt="Código QR para pago ampliado" class="w-full h-auto rounded-lg">
+        </div>
+    </div>
+
+    <!-- Scanner Modal -->
+    <div id="scanner-modal" class="fixed inset-0 bg-gray-900 bg-opacity-90 flex items-center justify-center p-4 hidden z-50">
+        <div class="bg-white p-4 rounded-lg shadow-xl w-full max-w-md relative">
+            <h3 class="text-lg font-bold text-center mb-2">Escanear Código de Barras</h3>
             <div id="reader" class="w-full"></div>
-            <button id="close-scanner-btn" class="w-full mt-4 bg-red-600 text-white font-bold py-2 px-4 rounded-lg hover:bg-red-700 transition-colors">Cancelar</button>
+            <button id="close-scanner-btn" class="mt-4 w-full bg-red-600 text-white py-2 rounded-lg hover:bg-red-700">Cancelar</button>
         </div>
     </div>
 
-    <!-- Image Preview Modal -->
-    <div id="image-preview-modal" class="fixed inset-0 bg-black bg-opacity-80 flex items-center justify-center hidden z-50 p-4 transition-opacity duration-300">
-        <div class="relative bg-gray-900 p-4 rounded-lg shadow-lg max-w-4xl max-h-[90vh] border border-gray-700">
-            <button id="close-preview-btn" class="absolute -top-4 -right-4 bg-red-600 text-white rounded-full w-10 h-10 flex items-center justify-center text-2xl font-bold hover:bg-red-700 transition-colors">&times;</button>
-            <img id="preview-image" src="" alt="Vista previa de la imagen" class="max-w-full max-h-[85vh] object-contain">
+    <!-- Share Modal -->
+    <div id="share-modal" class="fixed inset-0 bg-gray-600 bg-opacity-50 flex items-center justify-center hidden z-50 p-4">
+        <div class="bg-white p-6 rounded-lg shadow-xl max-w-sm w-full text-center">
+            <h3 class="text-xl font-bold text-gray-800 mb-4" id="share-modal-title">Venta Completada</h3>
+            <p class="text-gray-600 mb-6" id="share-modal-text">El PDF de la nota de venta ha sido generado. ¿Qué deseas hacer?</p>
+            <div class="space-y-3">
+                <button id="download-pdf-btn" class="w-full bg-green-600 text-white font-bold py-3 px-4 rounded-lg hover:bg-green-700 transition duration-200 flex items-center justify-center">
+                    <svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="#FFFFFF" class="mr-2"><path d="m720-120 160-160-56-56-64 64v-167h-80v167l-64-64-56 56 160 160ZM560 0v-80h320V0H560ZM240-160q-33 0-56.5-23.5T160-240v-560q0-33 23.5-56.5T240-880h280l240 240v121h-80v-81H480v-200H240v560h240v80H240Zm0-80v-560 560Z"/></svg>
+                    Descargar PDF
+                </button>
+                <button id="share-pdf-btn" class="w-full bg-blue-600 text-white font-bold py-3 px-4 rounded-lg hover:bg-blue-700 transition duration-200 flex items-center justify-center">
+                     <svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="#FFFFFF" class="mr-2"><path d="m680-160 120-120-28-28-72 72v-164h-40v164l-72-72-28 28 120 120Zm-560 0v-640l572 240h-12q-35 0-66 8t-60 22L200-680v140l240 60-240 60v140l216-92q-8 23-12 45.5t-4 46.5v2L120-160Zm560 80q-83 0-141.5-58.5T480-280q0-83 58.5-141.5T680-480q83 0 141.5 58.5T880-280q0 83-58.5 141.5T680-80ZM200-372v-308 400-92Z"/></svg>
+                    Compartir
+                </button>
+            </div>
+             <button id="close-share-modal" class="mt-6 text-sm text-gray-500 hover:text-gray-800">Cerrar</button>
         </div>
     </div>
 
-    <script src="script.js"></script>
+
+    <script>
+        // --- GLOBAL APP STATE ---
+        const API_BASE_URL = '/.netlify/functions';
+        
+        let products = [];
+        let sales = [];
+        let cart = [];
+        let preloadedLogo = null;
+        let preloadedPdfQr = null; 
+        let html5QrCode = null; 
+        let currentPdfBlob = null;
+        let currentPdfFileName = '';
+        let currentUser = null; // Almacenará los datos del usuario logueado
+
+        // --- AUTHENTICATION & INITIALIZATION ---
+        document.addEventListener('DOMContentLoaded', () => {
+            document.getElementById('current-year').textContent = new Date().getFullYear();
+            html5QrCode = new Html5Qrcode("reader");
+            setupLoginListener();
+            checkAuth();
+            document.getElementById('logout-button').addEventListener('click', logout);
+        });
+
+        function setupLoginListener() {
+            const loginForm = document.getElementById('login-form');
+            const errorMessage = document.getElementById('error-message');
+            const loginButton = document.getElementById('login-button');
+            const buttonText = document.getElementById('login-button-text');
+            const loader = document.getElementById('login-loader');
+
+            loginForm.addEventListener('submit', async (e) => {
+                e.preventDefault();
+                errorMessage.textContent = '';
+                buttonText.classList.add('hidden');
+                loader.classList.remove('hidden');
+                loginButton.disabled = true;
+
+                const username = document.getElementById('username').value;
+                const password = document.getElementById('password').value;
+
+                try {
+                    const response = await robustFetch(`${API_BASE_URL}/login`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ username, password }),
+                    });
+
+                    const result = await response.json();
+
+                    if (response.ok && result.status === 'success') {
+                        // Guardar usuario en sessionStorage
+                        sessionStorage.setItem('arelyShopUser', JSON.stringify(result.user));
+                        currentUser = result.user;
+                        initializeApp();
+                    } else {
+                        errorMessage.textContent = result.message || 'Credenciales incorrectas.';
+                    }
+                } catch (error) {
+                    console.error('Error de red al intentar iniciar sesión:', error);
+                    errorMessage.textContent = 'No se pudo conectar al servidor. Revisa tu conexión.';
+                } finally {
+                    buttonText.classList.remove('hidden');
+                    loader.classList.add('hidden');
+                    loginButton.disabled = false;
+                }
+            });
+        }
+        
+        function checkAuth() {
+            const userString = sessionStorage.getItem('arelyShopUser');
+            if (userString) {
+                currentUser = JSON.parse(userString);
+                initializeApp();
+            } else {
+                document.getElementById('login-container').classList.remove('hidden');
+                document.getElementById('app-container').classList.add('hidden');
+            }
+        }
+
+        function logout() {
+            sessionStorage.removeItem('arelyShopUser');
+            currentUser = null;
+            products = [];
+            sales = [];
+            cart = [];
+            
+            document.getElementById('login-container').classList.remove('hidden');
+            document.getElementById('app-container').classList.add('hidden');
+            
+            // Resetear UI
+            document.getElementById('cart-items').innerHTML = '<tr id="empty-cart-row"><td colspan="6" class="text-center py-8 text-gray-500">El carrito está vacío</td></tr>';
+            document.getElementById('sales-results-container').innerHTML = '';
+            document.getElementById('customer-form').reset();
+            updateTotal();
+        }
+
+        async function initializeApp() {
+            // Ocultar login y mostrar app
+            document.getElementById('login-container').classList.add('hidden');
+            document.getElementById('app-container').classList.remove('hidden');
+            document.getElementById('app-container').classList.add('flex');
+
+            // Mostrar info del usuario
+            document.getElementById('user-fullname').textContent = currentUser.full_name || 'Usuario';
+            document.getElementById('user-role').textContent = currentUser.role || 'Rol';
+
+            // Configurar Pestañas y Eventos
+            initTabs();
+            setupEventListeners();
+            updateDateTime();
+            setInterval(updateDateTime, 60000); 
+
+            // Cargar datos en paralelo
+            await Promise.all([
+                fetchProducts(),
+                fetchSales(),
+                loadImageAsPngDataUrl('/images/logo-escritorio.svg').then(logo => preloadedLogo = logo),
+                loadImageAsJpegDataUrl('/images/qr-pdf.webp').then(qr => preloadedPdfQr = qr)
+            ]);
+
+            // Renderizar datos una vez cargados
+            renderSalesResults();
+            displayNextSaleId();
+        }
+        
+        function updateDateTime() {
+            const now = new Date();
+            const dateOptions = { day: '2-digit', month: '2-digit', year: 'numeric' };
+            document.getElementById('current-date').textContent = now.toLocaleDateString('es-ES', dateOptions);
+        }
+
+        // --- ROBUST NETWORKING & UI FUNCTIONS ---
+        async function robustFetch(url, options, maxRetries = 3) {
+            for (let attempt = 0; attempt < maxRetries; attempt++) {
+                try {
+                    const response = await fetch(url, options);
+                    if (!response.ok) {
+                        const errorData = await response.json();
+                        throw new Error(errorData.message || `Error HTTP: ${response.status}`);
+                    }
+                    return response;
+                } catch (error) {
+                    console.warn(`Intento ${attempt + 1} fallido: ${error.message}`);
+                    if (attempt + 1 >= maxRetries) {
+                        console.error("Todos los intentos de fetch fallaron.");
+                        throw error;
+                    }
+                    const delay = Math.pow(2, attempt) * 1000;
+                    await new Promise(resolve => setTimeout(resolve, delay));
+                }
+            }
+        }
+
+        function showNotification(message, type) {
+            const banner = document.getElementById('notification-banner');
+            const messageSpan = document.getElementById('notification-message');
+            messageSpan.textContent = message;
+            banner.className = 'fixed top-0 left-0 right-0 p-4 text-white text-center z-50';
+            banner.classList.add(type === 'success' ? 'bg-green-600' : 'bg-red-600');
+            banner.style.transform = 'translateY(0)';
+            setTimeout(() => {
+                banner.style.transform = 'translateY(-100%)';
+            }, 4000);
+        }
+
+        const loadImageAsPngDataUrl = (url) => new Promise((resolve) => {
+            const img = new Image();
+            img.crossOrigin = 'Anonymous';
+            img.onload = () => {
+                const canvas = document.createElement('canvas');
+                canvas.width = img.width;
+                canvas.height = img.height;
+                const ctx = canvas.getContext('2d');
+                ctx.drawImage(img, 0, 0);
+                resolve({dataURL: canvas.toDataURL('image/png'), width: img.width, height: img.height});
+            };
+            img.onerror = () => resolve(null);
+            img.src = url + (url.includes('?') ? '&' : '?') + new Date().getTime();
+        });
+
+        const loadImageAsJpegDataUrl = (url) => new Promise((resolve) => {
+            const img = new Image();
+            img.crossOrigin = 'Anonymous';
+            img.onload = () => {
+                const canvas = document.createElement('canvas');
+                canvas.width = img.width;
+                canvas.height = img.height;
+                const ctx = canvas.getContext('2d');
+                ctx.drawImage(img, 0, 0);
+                resolve({dataURL: canvas.toDataURL('image/jpeg', 0.8), width: img.width, height: img.height});
+            };
+            img.onerror = () => resolve(null);
+            img.src = url + (url.includes('?') ? '&' : '?') + new Date().getTime();
+        });
+        
+        function initTabs() {
+            const tabs = {
+                pos: { btn: document.getElementById('tab-pos'), content: document.getElementById('content-pos') },
+                salesRegistry: { btn: document.getElementById('tab-sales-registry'), content: document.getElementById('content-sales-registry') }
+            };
+
+            Object.keys(tabs).forEach(key => {
+                tabs[key].btn.addEventListener('click', () => {
+                    Object.values(tabs).forEach(t => {
+                        t.btn.classList.remove('tab-active');
+                        t.btn.classList.add('tab-inactive');
+                        t.content.style.display = 'none';
+                    });
+                    tabs[key].btn.classList.add('tab-active');
+                    tabs[key].btn.classList.remove('tab-inactive');
+                    tabs[key].content.style.display = 'block';
+                    if (key === 'salesRegistry') renderSalesResults();
+                });
+            });
+            // Asegurarse de que el tab de POS esté activo al inicio
+            tabs.pos.btn.classList.add('tab-active');
+            tabs.pos.btn.classList.remove('tab-inactive');
+            tabs.pos.content.style.display = 'block';
+            tabs.salesRegistry.content.style.display = 'none';
+        }
+
+        function setupEventListeners() {
+            const searchInput = document.getElementById('search-product');
+            searchInput.addEventListener('input', handleSearch);
+            searchInput.addEventListener('keydown', handleBarcodeScan);
+
+            document.getElementById('search-sales-input').addEventListener('input', renderSalesResults);
+            document.getElementById('complete-sale-button').addEventListener('click', completeSale);
+            document.getElementById('generate-quote-button').addEventListener('click', handleGenerateQuote);
+
+            document.getElementById('closeProductModal').addEventListener('click', () => document.getElementById('productDetailModal').classList.add('hidden'));
+            
+            document.querySelectorAll('.copy-btn').forEach(button => {
+                button.addEventListener('click', (e) => {
+                    const targetId = e.currentTarget.dataset.copyTarget;
+                    const textToCopy = document.getElementById(targetId).textContent;
+                    copyToClipboard(textToCopy, e.currentTarget);
+                });
+            });
+            
+            document.getElementById('cart-items').addEventListener('click', (e) => {
+                const infoButton = e.target.closest('.info-btn');
+                if (infoButton) {
+                    const cartIndex = infoButton.dataset.cartIndex;
+                    if (cartIndex !== undefined) {
+                        const product = cart[parseInt(cartIndex)];
+                        if (product) {
+                            showProductModal(product);
+                        }
+                    }
+                }
+            });
+            
+            document.getElementById('closeQrModal').addEventListener('click', () => {
+                document.getElementById('qrCodeModal').classList.add('hidden');
+            });
+
+            document.getElementById('scan-pos-btn').addEventListener('click', () => startScanner('search-product'));
+            document.getElementById('close-scanner-btn').addEventListener('click', stopScanner);
+        }
+
+        // --- DATA MAPPING ---
+        const mapProductToFrontend = (p) => ({
+            nombre: p.name,
+            sku: p.sku,
+            precioVenta: p.sale_price,
+            precioDescuento: p.discount_price,
+            precioCompra: p.purchase_price,
+            precioMayoreo: p.wholesale_price,
+            cantidad: p.stock,
+            codigoBarras: p.barcode,
+            ciudadSucursal: p.ciudad_sucursal,
+            urlFoto1: p.photo_url_1
+        });
+        
+        async function fetchProducts() {
+            try {
+                const response = await robustFetch(`${API_BASE_URL}/products`);
+                const result = await response.json();
+                products = result.status === 'success' ? result.data.map(mapProductToFrontend) : [];
+            } catch (error) {
+                console.error("Fallo al cargar productos:", error);
+                showNotification("No se pudieron cargar los productos. Revisa tu conexión.", 'error');
+            }
+        }
+
+        async function fetchSales() {
+            try {
+                const response = await robustFetch(`${API_BASE_URL}/sales`);
+                const result = await response.json();
+                if (result.status === 'success') {
+                    sales = result.data;
+                }
+            } catch (error) {
+                console.error("Fallo al cargar las ventas:", error);
+                showNotification("No se pudieron cargar las ventas. Revisa tu conexión.", 'error');
+            }
+        }
+        
+        function displayNextSaleId() {
+            let nextId = "AS1";
+            if (sales.length > 0) {
+                // Ordenar ventas por fecha (o ID numérico) para encontrar la última
+                const sortedSales = [...sales].sort((a, b) => {
+                    const aNum = parseInt(a.saleId.substring(2));
+                    const bNum = parseInt(b.saleId.substring(2));
+                    if (!isNaN(aNum) && !isNaN(bNum)) {
+                        return aNum - bNum;
+                    }
+                    // Fallback si los IDs no son numéricos
+                    return new Date(b.fechaVenta) - new Date(a.fechaVenta);
+                });
+                
+                const lastSaleId = sortedSales[sortedSales.length - 1].saleId;
+                const lastIdNumber = parseInt(lastSaleId.substring(2));
+                
+                if (!isNaN(lastIdNumber)) {
+                    nextId = 'AS' + (lastIdNumber + 1);
+                }
+            }
+            document.getElementById('current-sale-id').textContent = nextId;
+        }
+
+        function handleBarcodeScan(e) {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                const barcode = e.target.value.trim();
+                if (barcode === '') return;
+                const foundProduct = products.find(p => p.codigoBarras?.toString() === barcode);
+                if (foundProduct) {
+                    addToCart(foundProduct);
+                    e.target.value = '';
+                } else {
+                    showNotification('Producto no encontrado con ese código de barras.', 'error');
+                }
+            }
+        }
+
+        function handleSearch(e) {
+            const searchTerm = e.target.value.toLowerCase();
+            const resultsContainer = document.getElementById('search-results');
+            if (searchTerm.length < 2) {
+                resultsContainer.innerHTML = '';
+                resultsContainer.classList.add('hidden');
+                return;
+            }
+            const filteredProducts = products.filter(p => 
+                p.nombre?.toLowerCase().includes(searchTerm) ||
+                p.sku?.toString().toLowerCase().includes(searchTerm)
+            );
+            resultsContainer.classList.remove('hidden');
+            resultsContainer.innerHTML = '';
+            if (filteredProducts.length > 0) {
+                filteredProducts.forEach(p => {
+                    const div = document.createElement('div');
+                    div.className = 'p-3 hover:bg-gray-100 cursor-pointer';
+                    div.textContent = `${p.nombre} (Bs ${p.precioVenta}) - Stock: ${p.cantidad}`;
+                    div.onclick = () => addToCart(p);
+                    resultsContainer.appendChild(div);
+                });
+            } else {
+                resultsContainer.innerHTML = '<div class="p-3 text-gray-500">No se encontraron productos</div>';
+            }
+        }
+
+        function addToCart(product) {
+            const latestProductInfo = products.find(p => p.sku === product.sku && p.nombre === product.nombre);
+            
+            if (!latestProductInfo || latestProductInfo.cantidad <= 0) {
+                showNotification('Este producto no tiene stock disponible.', 'error');
+                document.getElementById('search-product').value = '';
+                document.getElementById('search-results').classList.add('hidden');
+                return;
+            }
+
+            const existingCartItem = cart.find(item => item.sku === product.sku && item.nombre === product.nombre);
+
+            if (existingCartItem) {
+                if (existingCartItem.quantity < latestProductInfo.cantidad) {
+                    existingCartItem.quantity++;
+                } else {
+                    showNotification(`No se puede añadir más. Stock máximo: ${latestProductInfo.cantidad}`, 'error');
+                }
+            } else {
+                const defaultPrice = (latestProductInfo.precioDescuento && parseFloat(latestProductInfo.precioDescuento) > 0)
+                               ? parseFloat(latestProductInfo.precioDescuento)
+                               : parseFloat(latestProductInfo.precioVenta);
+                cart.push({ ...latestProductInfo, quantity: 1, customPrice: defaultPrice });
+            }
+            
+            document.getElementById('search-product').value = '';
+            document.getElementById('search-results').classList.add('hidden');
+            renderCart();
+        }
+
+        function renderCart() {
+            const cartItemsContainer = document.getElementById('cart-items');
+            cartItemsContainer.innerHTML = '';
+            if (cart.length === 0) {
+                cartItemsContainer.innerHTML = '<tr id="empty-cart-row"><td colspan="6" class="text-center py-8 text-gray-500">El carrito está vacío</td></tr>';
+            } else {
+                cart.forEach((item, index) => {
+                    const subtotal = item.quantity * item.customPrice;
+                    const row = document.createElement('tr');
+                    row.innerHTML = `
+                        <td class="px-2 py-3 text-center align-middle">
+                            <button class="info-btn text-gray-400 hover:text-blue-600" data-cart-index="${index}">
+                                <svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="currentColor"><path d="M440-280h80v-240h-80v240Zm40-320q17 0 28.5-11.5T520-640q0-17-11.5-28.5T480-680q-17 0-28.5 11.5T440-640q0 17 11.5 28.5T480-600Zm0 520q-83 0-156-31.5T197-197q-54-54-85.5-127T80-480q0-83 31.5-156T197-763q54-54 127-85.5T480-880q83 0 156 31.5T763-763q54 54 85.5 127T880-480q0 83-31.5 156T763-197q-54 54-127 85.5T480-80Zm0-80q134 0 227-93t93-227q0-134-93-227t-227-93q-134 0-227 93t-93 227q0 134 93 227t227 93Zm0-320Z"/></svg>
+                            </button>
+                        </td>
+                        <td class="px-4 py-3 text-sm text-gray-800 align-middle">${item.nombre}</td>
+                        <td class="px-4 py-3 text-sm align-middle"><input type="number" step="0.01" value="${item.customPrice.toFixed(2)}" onchange="updateItemPrice(${index}, this.value)" class="w-24 text-center border rounded-lg py-1"></td>
+                        <td class="px-4 py-3 text-sm text-center align-middle"><input type="number" min="1" value="${item.quantity}" onchange="setQuantity(${index}, this.value)" class="w-20 text-center border rounded-lg py-1"></td>
+                        <td class="px-4 py-3 text-sm text-right font-medium align-middle">Bs ${subtotal.toFixed(2)}</td>
+                        <td class="px-2 py-3 text-center align-middle"><button onclick="removeFromCart(${index})" class="text-red-500 hover:text-red-700 font-bold text-xl">&times;</button></td>
+                    `;
+                    cartItemsContainer.appendChild(row);
+                });
+            }
+            updateTotal();
+        }
+        
+        function updateItemPrice(index, newPrice) {
+            const price = parseFloat(newPrice);
+            if (!isNaN(price) && price >= 0) cart[index].customPrice = price;
+            renderCart();
+        }
+
+        function setQuantity(index, newQuantity) {
+            const cartItem = cart[index];
+            const productInStock = products.find(p => p.sku === cartItem.sku && p.nombre === cartItem.nombre);
+            const maxStock = productInStock ? productInStock.cantidad : 0;
+            
+            let quantity = parseInt(newQuantity);
+
+            if (isNaN(quantity) || quantity < 1) {
+                quantity = 1;
+            }
+
+            if (quantity > maxStock) {
+                showNotification(`Stock insuficiente. Máximo disponible: ${maxStock}`, 'error');
+                cart[index].quantity = maxStock;
+                if (maxStock === 0) {
+                     cart.splice(index, 1);
+                }
+            } else {
+                cart[index].quantity = quantity;
+            }
+
+            renderCart();
+        }
+
+        function removeFromCart(index) {
+            cart.splice(index, 1);
+            renderCart();
+        }
+
+        function updateTotal() {
+            const total = cart.reduce((sum, item) => sum + (item.quantity * item.customPrice), 0);
+            document.getElementById('total-amount').textContent = `Bs ${total.toFixed(2)}`;
+            const isEmpty = cart.length === 0;
+            document.getElementById('complete-sale-button').disabled = isEmpty;
+            document.getElementById('generate-quote-button').disabled = isEmpty;
+        }
+
+        async function completeSale() {
+            if (cart.length === 0) return;
+            const button = document.getElementById('complete-sale-button');
+            const buttonText = document.getElementById('sale-button-text');
+            const loader = document.getElementById('sale-loader');
+            buttonText.classList.add('hidden');
+            loader.classList.remove('hidden');
+            button.disabled = true;
+
+            const saleId = document.getElementById('current-sale-id').textContent;
+            
+            const saleData = {
+                saleId: saleId,
+                customer: { name: document.getElementById('customer-name').value, contact: document.getElementById('customer-contact').value, id: document.getElementById('customer-id').value },
+                items: cart.map(item => ({ 
+                    Nombre: item.nombre, 
+                    SKU: item.sku, 
+                    cantidad: item.quantity, 
+                    precio: item.customPrice,
+                    'Precio (Compra)': item.precioCompra // Para reportes de ganancias
+                })),
+                total: cart.reduce((sum, item) => sum + (item.quantity * item.customPrice), 0),
+                user: {
+                    id: currentUser.id,
+                    fullName: currentUser.full_name
+                }
+            };
+            
+            try {
+                // 1. Guardar la venta en la base de datos y actualizar stock
+                const response = await robustFetch(`${API_BASE_URL}/sales`, {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify(saleData)
+                });
+                
+                const result = await response.json();
+                
+                if (result.status === 'success') {
+                    // 2. Generar PDF
+                    const { pdfBlob, fileName } = generateSalePDF(result.data.saleId, saleData);
+                    
+                    // 3. Mostrar opciones para compartir/descargar
+                    showShareOptions(pdfBlob, fileName, 'Venta Completada', 'Venta guardada y PDF generado. ¿Qué deseas hacer?');
+                    
+                    // 4. Actualizar datos locales
+                    await Promise.all([fetchProducts(), fetchSales()]);
+
+                    // 5. Limpiar UI
+                    cart = [];
+                    renderCart();
+                    document.getElementById('customer-form').reset();
+                    renderSalesResults();
+                    displayNextSaleId();
+
+                } else {
+                    throw new Error(result.message || 'Error desconocido del servidor.');
+                }
+            } catch (error) {
+                console.error('Error al registrar la venta:', error);
+                showNotification(`Error al registrar la venta: ${error.message}`, 'error');
+            } finally {
+                buttonText.classList.remove('hidden');
+                loader.classList.add('hidden');
+                button.disabled = cart.length === 0;
+            }
+        }
+
+        function generateSalePDF(saleId, saleData) {
+            return generateDocumentPDF('Nota de Venta', `Nr: ${saleId}`, saleData);
+        }
+
+        function handleGenerateQuote() {
+            if (cart.length === 0) {
+                showNotification("El carrito está vacío. Añade productos para cotizar.", 'error');
+                return;
+            }
+
+            const quoteData = {
+                customer: { 
+                    name: document.getElementById('customer-name').value, 
+                    contact: document.getElementById('customer-contact').value, 
+                    id: document.getElementById('customer-id').value 
+                },
+                items: cart.map(item => ({ 
+                    Nombre: item.nombre, 
+                    SKU: item.sku, 
+                    cantidad: item.quantity, 
+                    precio: item.customPrice 
+                })),
+                total: cart.reduce((sum, item) => sum + (item.quantity * item.customPrice), 0)
+            };
+            
+            const { pdfBlob, fileName } = generateQuotePDF(quoteData);
+            showShareOptions(pdfBlob, fileName, 'Cotización Generada', 'El PDF de la cotización ha sido generado. ¿Qué deseas hacer?');
+        }
+
+        function generateQuotePDF(quoteData) {
+            return generateDocumentPDF('Cotización', 'Válido por 24hrs.', quoteData, 'Cotizacion');
+        }
+
+        function generateDocumentPDF(docType, docIdentifier, data, filePrefix = 'Nota_Venta') {
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF();
+            
+            const pageW = doc.internal.pageSize.getWidth();
+            const margin = 14;
+            const headerW = pageW - (margin * 2);
+            const headerH = 30;
+            const r = 3; 
+            
+            doc.setFillColor('#303c54');
+            doc.roundedRect(margin, margin, headerW, headerH, r, r, 'F');
+            doc.setTextColor('#FFFFFF');
+
+            let textStartX = margin + 5;
+            if (preloadedLogo) {
+                const logoH = 7.2; // Reducido
+                const logoW = (preloadedLogo.width / preloadedLogo.height) * logoH;
+                const logoY = margin + (headerH - logoH) / 2;
+                doc.addImage(preloadedLogo.dataURL, 'PNG', margin + 5, logoY, logoW, logoH, undefined, 'FAST');
+                textStartX = margin + logoW + 8;
+            }
+            
+            doc.setFontSize(17.6);
+            doc.text("ArelyShop", textStartX, margin + 15);
+            doc.setFontSize(8.8);
+            doc.text("Santa Cruz de la Sierra, Bolivia", textStartX, margin + 21);
+
+            doc.setFontSize(16);
+            doc.text(docType, pageW - margin - 5, margin + 12, { align: 'right' });
+            doc.setFontSize(10);
+            doc.text(docIdentifier, pageW - margin - 5, margin + 18, { align: 'right' });
+            doc.text(`Fecha: ${new Date().toLocaleDateString('es-BO')}`, pageW - margin - 5, margin + 24, { align: 'right' });
+
+            const startY = margin + headerH + 10;
+            doc.setTextColor('#000000');
+            doc.setFontSize(12);
+            doc.text("Datos del Cliente:", margin, startY);
+            doc.setFontSize(10);
+            
+            const customerInfo = `Nombre: ${data.customer.name || 'N/A'}   |   Contacto: ${data.customer.contact || 'N/A'}   |   NIT/CI: ${data.customer.id || 'N/A'}`;
+            doc.text(customerInfo, margin, startY + 8);
+            
+            const tableColumn = ["Cant.", "Descripción", "P. Unit.", "Subtotal"];
+            const tableRows = [];
+            data.items.forEach(item => {
+                const description = `${item.Nombre}\n(SKU: ${item.SKU || 'N/A'})`;
+                const itemData = [ item.cantidad, description, `Bs ${item.precio.toFixed(2)}`, `Bs ${(item.cantidad * item.precio).toFixed(2)}` ];
+                tableRows.push(itemData);
+            });
+
+            doc.autoTable({
+                head: [tableColumn],
+                body: tableRows, 
+                startY: startY + 15, 
+                margin: { left: margin, right: margin },
+                headStyles: { fillColor: '#cdcdcd', textColor: '#000000' },
+                styles: { cellPadding: 2, fontSize: 9 },
+                didParseCell: function (data) {
+                    if (data.column.dataKey === 1) {
+                        data.cell.styles.fontSize = 8;
+                    }
+                }
+            });
+            
+            const finalY = doc.autoTable.previous.finalY;
+            doc.setFontSize(14);
+            doc.text("TOTAL:", margin, finalY + 15);
+            doc.text(`Bs ${data.total.toFixed(2)}`, pageW - margin, finalY + 15, { align: 'right' });
+            
+            doc.setFontSize(10);
+            const thankYouMessage = filePrefix === 'Cotizacion' ? "¡Gracias por su interés!" : "¡Gracias por su compra!";
+            doc.text(thankYouMessage, pageW / 2, finalY + 30, { align: 'center' });
+            doc.text("Visita nuestra tienda online: www.arelyshop.com", pageW / 2, finalY + 35, { align: 'center' });
+            
+            if (preloadedPdfQr) {
+                const qrSize = 25;
+                const qrX = (pageW - qrSize) / 2;
+                const qrY = finalY + 40;
+                doc.addImage(preloadedPdfQr.dataURL, 'JPEG', qrX, qrY, qrSize, qrSize, undefined, 'FAST');
+            }
+
+            const customerName = (data.customer.name || '').trim().replace(/ /g, "_") || "sin-cliente";
+            let fileName;
+            if (filePrefix === 'Nota_Venta') {
+                const saleId = docIdentifier.split(': ')[1] || '';
+                fileName = `${filePrefix}_${saleId}_${customerName}.pdf`;
+            } else {
+                fileName = `${filePrefix}_${customerName}.pdf`;
+            }
+            
+            const pdfBlob = doc.output('blob');
+            return { pdfBlob, fileName };
+        }
+        
+        function renderSalesResults() {
+            const searchTerm = document.getElementById('search-sales-input').value.toLowerCase();
+            const container = document.getElementById('sales-results-container');
+            container.innerHTML = '';
+            
+            const filteredSales = sales.filter(s => 
+                s.saleId?.toLowerCase().includes(searchTerm) ||
+                s.nombreCliente?.toLowerCase().includes(searchTerm) ||
+                s.contacto?.toString().toLowerCase().includes(searchTerm) ||
+                s.userName?.toLowerCase().includes(searchTerm) // Buscar por vendedor
+            );
+
+            if (filteredSales.length === 0) {
+                container.innerHTML = '<p class="text-gray-500 text-center">No se encontraron ventas.</p>';
+                return;
+            }
+
+            filteredSales.forEach(sale => {
+                const isAnnulled = sale.estado === 'Anulada';
+                const statusText = isAnnulled ? 'Anulada' : 'Completada';
+                const statusColor = isAnnulled ? 'bg-red-500 text-white' : 'bg-green-500 text-white';
+                const card = document.createElement('div');
+                card.className = `p-4 border rounded-lg ${isAnnulled ? 'bg-gray-200 opacity-70' : 'bg-white'}`;
+                
+                let productsHtml = '<ul>';
+                try {
+                    const saleProducts = (typeof sale.productosVendidos === 'string') ? JSON.parse(sale.productosVendidos) : sale.productosVendidos;
+                    if (Array.isArray(saleProducts)) {
+                        saleProducts.forEach(p => {
+                            const price = p.precio !== undefined ? parseFloat(p.precio).toFixed(2) : 'N/A';
+                            productsHtml += `<li class="text-xs">${p.cantidad} x ${p.Nombre} (SKU: ${p.SKU}) @ Bs ${price}</li>`;
+                        });
+                    }
+                } catch(e) { productsHtml += '<li>Error al leer productos</li>'; }
+                productsHtml += '</ul>';
+                
+                const totalVenta = sale.totalVenta !== undefined ? parseFloat(sale.totalVenta).toFixed(2) : 'N/A';
+                
+                card.innerHTML = `
+                    <div class="flex flex-wrap justify-between items-start gap-2">
+                        <div>
+                            <p class="font-bold text-lg">Venta ${sale.saleId}</p>
+                            <p class="text-sm text-gray-600">${new Date(sale.fechaVenta).toLocaleString('es-ES')} - ${sale.nombreCliente || 'N/A'}</p>
+                            <p class="text-sm text-gray-600">Vendido por: <strong>${sale.userName || 'N/A'}</strong></p>
+                            <p class="font-semibold text-blue-600">Total: Bs ${totalVenta}</p>
+                        </div>
+                        <div class="text-right">
+                             <span class="font-semibold text-sm px-2 py-1 rounded-lg ${statusColor}">${statusText}</span>
+                             <div class="mt-2 flex space-x-2 justify-end">
+                                <button onclick="reprintSale('${sale.saleId}')" class="text-xs bg-blue-600 text-white px-3 py-1 rounded-lg hover:bg-blue-700">Reimprimir</button>
+                                <!-- Lógica de anulación no implementada en backend aún -->
+                                <!-- <button onclick="openAnnulConfirmModal('${sale.saleId}')" class="text-xs bg-red-600 text-white px-3 py-1 rounded-lg hover:bg-red-700 disabled:bg-gray-400" ${isAnnulled ? 'disabled' : ''}>Anular</button> -->
+                             </div>
+                        </div>
+                    </div>
+                    <div class="mt-2 text-sm border-t pt-2">${productsHtml}</div>
+                `;
+                container.appendChild(card);
+            });
+        }
+
+        function reprintSale(saleId) {
+            const saleToReprint = sales.find(s => s.saleId === saleId);
+            if (!saleToReprint) {
+                showNotification("Venta no encontrada para reimprimir.", 'error');
+                return;
+            }
+
+            try {
+                const saleItems = (typeof saleToReprint.productosVendidos === 'string') ? JSON.parse(saleToReprint.productosVendidos) : saleToReprint.productosVendidos;
+                
+                const saleData = {
+                    customer: {
+                        name: saleToReprint.nombreCliente,
+                        contact: saleToReprint.contacto,
+                        id: saleToReprint.nitCi
+                    },
+                    items: Array.isArray(saleItems) ? saleItems : [],
+                    total: parseFloat(saleToReprint.totalVenta)
+                };
+                const { pdfBlob, fileName } = generateSalePDF(saleId, saleData);
+                showShareOptions(pdfBlob, fileName, 'Reimprimir Nota de Venta', 'El PDF de la nota de venta ha sido generado. ¿Qué deseas hacer?');
+            } catch (error) {
+                console.error("Error preparando data para PDF reprint:", error);
+                showNotification("No se pudo generar el PDF para esta venta.", 'error');
+            }
+        }
+
+        function showProductModal(product) {
+            document.getElementById('modalProductImage').src = product.urlFoto1 || 'https://placehold.co/400x400/e2e8f0/94a3b8?text=Sin+Imagen';
+            document.getElementById('modalProductName').textContent = product.nombre || 'Sin Nombre';
+            document.getElementById('modalProductSku').textContent = product.sku || 'N/A';
+            document.getElementById('modalProductCode').textContent = product.codigoBarras || 'N/A';
+            document.getElementById('modalProductBranch').textContent = product.ciudadSucursal || 'N/A';
+            document.getElementById('modalProductStock').textContent = product.cantidad || '0';
+            
+            const salePrice = parseFloat(product.precioVenta || 0).toFixed(2);
+            const discountPrice = parseFloat(product.precioDescuento || 0);
+            const purchasePrice = parseFloat(product.precioCompra || 0).toFixed(2);
+            const wholesalePrice = parseFloat(product.precioMayoreo || 0).toFixed(2);
+            
+            document.getElementById('modalProductPrice').textContent = `Bs. ${salePrice}`;
+            document.getElementById('modalProductPurchasePrice').textContent = `Bs. ${purchasePrice}`;
+            document.getElementById('modalProductWholesalePrice').textContent = `Bs. ${wholesalePrice}`;
+            
+            const discountContainer = document.getElementById('discountPriceContainer');
+            if (discountPrice > 0) {
+                document.getElementById('modalProductDiscountPrice').textContent = `Bs. ${discountPrice.toFixed(2)}`;
+                discountContainer.classList.remove('hidden');
+                document.getElementById('modalProductPrice').classList.add('line-through');
+            } else {
+                discountContainer.classList.add('hidden');
+                document.getElementById('modalProductPrice').classList.remove('line-through');
+            }
+
+            document.getElementById('productDetailModal').classList.remove('hidden');
+        }
+
+        function copyToClipboard(text, buttonElement) {
+            if (!text || text === 'N/A') return;
+            const textarea = document.createElement('textarea');
+            textarea.value = text;
+            document.body.appendChild(textarea);
+            textarea.select();
+            try {
+                document.execCommand('copy');
+                const originalIcon = buttonElement.innerHTML;
+                buttonElement.innerHTML = '¡Copiado!';
+                setTimeout(() => {
+                    buttonElement.innerHTML = originalIcon;
+                }, 1500);
+            } catch (err) {
+                showNotification('No se pudo copiar el texto.', 'error');
+            }
+            document.body.removeChild(textarea);
+        }
+
+        function showQrModal() {
+            const qrSrc = document.getElementById('pos-qr-code').src;
+            if (qrSrc) {
+                document.getElementById('modalQrImage').src = qrSrc;
+                document.getElementById('qrCodeModal').classList.remove('hidden');
+            }
+        }
+        
+        function showShareOptions(pdfBlob, fileName, title, text) {
+            currentPdfBlob = pdfBlob;
+            currentPdfFileName = fileName;
+
+            const modal = document.getElementById('share-modal');
+            const modalTitle = document.getElementById('share-modal-title');
+            const modalText = document.getElementById('share-modal-text');
+            const shareBtn = document.getElementById('share-pdf-btn');
+            const downloadBtn = document.getElementById('download-pdf-btn');
+            const closeModalBtn = document.getElementById('close-share-modal');
+
+            modalTitle.textContent = title;
+            modalText.textContent = text;
+
+            const dataToShare = { files: [new File([currentPdfBlob], currentPdfFileName, { type: 'application/pdf' })] };
+            if (navigator.share && navigator.canShare && navigator.canShare(dataToShare)) {
+                shareBtn.classList.remove('hidden');
+            } else {
+                shareBtn.classList.add('hidden');
+            }
+
+            modal.classList.remove('hidden');
+
+            downloadBtn.onclick = () => {
+                 const link = document.createElement('a');
+                 link.href = URL.createObjectURL(currentPdfBlob);
+                 link.download = currentPdfFileName;
+                 document.body.appendChild(link);
+                 link.click();
+                 document.body.removeChild(link);
+                 modal.classList.add('hidden');
+            };
+
+            shareBtn.onclick = async () => {
+                try {
+                    const file = new File([currentPdfBlob], currentPdfFileName, { type: 'application/pdf' });
+                    await navigator.share({
+                        files: [file],
+                        title: `Documento: ${currentPdfFileName}`,
+                        text: 'Documento generado desde el sistema ArelyShop.',
+                    });
+                } catch (error) {
+                    console.error('Error al compartir:', error);
+                    if (error.name !== 'AbortError') {
+                        showNotification('No se pudo compartir el archivo.', 'error');
+                    }
+                } finally {
+                    modal.classList.add('hidden');
+                }
+            };
+
+            closeModalBtn.onclick = () => {
+                modal.classList.add('hidden');
+            };
+        }
+
+        function startScanner(targetInputId) {
+            document.getElementById('scanner-modal').classList.remove('hidden');
+            
+            const onScanSuccess = (decodedText, decodedResult) => {
+                const targetInput = document.getElementById(targetInputId);
+                targetInput.value = decodedText;
+                stopScanner();
+
+                if (targetInputId === 'search-product') {
+                    const enterEvent = new KeyboardEvent('keydown', { key: 'Enter', bubbles: true });
+                    targetInput.dispatchEvent(enterEvent);
+                }
+            };
+
+            const config = { fps: 10, qrbox: { width: 250, height: 250 } };
+            
+            html5QrCode.start({ facingMode: "environment" }, config, onScanSuccess, (error) => {})
+                .catch(err => {
+                    console.error("No se pudo iniciar el escáner.", err);
+                    showNotification("No se pudo iniciar la cámara. Asegúrate de dar los permisos necesarios.", 'error');
+                    stopScanner();
+                });
+        }
+
+        function stopScanner() {
+            if (html5QrCode && html5QrCode.isScanning) {
+                html5QrCode.stop().catch(err => {}).finally(() => {
+                    document.getElementById('scanner-modal').classList.add('hidden');
+                });
+            } else {
+                 document.getElementById('scanner-modal').classList.add('hidden');
+            }
+        }
+
+    </script>
 </body>
 </html>
