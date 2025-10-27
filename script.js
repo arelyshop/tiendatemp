@@ -106,6 +106,12 @@ document.addEventListener('DOMContentLoaded', () => {
         if (userFullnameEl) userFullnameEl.textContent = currentUser.full_name || 'Admin';
         if (userRoleEl) userRoleEl.textContent = currentUser.role || 'admin';
 
+        // Mostrar info de usuario en el header móvil
+        const userFullnameMobileEl = document.getElementById('user-fullname-mobile');
+        const userRoleMobileEl = document.getElementById('user-role-mobile');
+        if (userFullnameMobileEl) userFullnameMobileEl.textContent = currentUser.full_name || 'Admin';
+        if (userRoleMobileEl) userRoleMobileEl.textContent = currentUser.role || 'admin';
+
         // Iniciar la lógica específica del panel de administración
         initializeAdminLogic();
     }
@@ -174,7 +180,7 @@ document.addEventListener('DOMContentLoaded', () => {
             if (!banner || !messageSpan) return;
 
             messageSpan.textContent = message;
-            banner.className = 'fixed top-5 left-1/2 -translate-x-1/2 w-full max-w-md p-4 text-white text-center z-50 rounded-lg shadow-lg'; // Reset classes
+            banner.className = 'fixed top-5 left-1/2 -translate-x-1/2 w-11/12 md:w-full md:max-w-md p-4 text-white text-center z-50 rounded-lg shadow-lg'; // Reset classes
             
             if (type === 'success') {
                 banner.classList.add('bg-green-600');
@@ -702,3 +708,5 @@ csvFileInput.value = '';
         }
     }
 });
+
+
