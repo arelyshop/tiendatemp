@@ -20,10 +20,7 @@
         #reader__dashboard_section_csr button { background-color: #4a5568; color: white; padding: 8px 16px; border-radius: 8px; margin-top: 10px; }
         .sortable-ghost { opacity: 0.4; background: #2d3748; }
         .drag-handle { cursor: move; }
-        #notification-banner {
-            transition: transform 0.5s ease-in-out;
-            transform: translateY(-120%);
-        }
+        /* Ya no necesitamos #notification-banner aquí, se maneja con Tailwind */
         /* Estilos para el Loader de Login */
         .loader { border: 4px solid #f3f3f3; border-radius: 50%; border-top: 4px solid #3b82f6; width: 24px; height: 24px; animation: spin 1s linear infinite; }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
@@ -67,7 +64,8 @@
     </div>
 
     <!-- Banner de Notificación -->
-    <div id="notification-banner" class="fixed top-5 left-1/2 -translate-x-1/2 w-11/12 md:w-full md:max-w-md p-4 text-white text-center z-50 rounded-lg shadow-lg">
+    <!-- Clases de layout (left-4 right-4 etc) + clases de transición + estado inicial oculto (-translate-y-[120%]) -->
+    <div id="notification-banner" class="fixed top-5 left-4 right-4 md:left-1/2 md:-translate-x-1/2 md:right-auto md:w-full md:max-w-md p-4 text-white text-center z-50 rounded-lg shadow-lg transition-transform duration-500 ease-in-out -translate-y-[120%]">
         <span id="notification-message"></span>
     </div>
 
@@ -102,7 +100,9 @@
 
             <!-- Contenido Principal -->
             <div class="flex flex-col flex-grow min-w-0">
-                <header class="flex items-center justify-between h-16 bg-gray-800 border-b border-gray-700 px-4">
+                <!-- Header (Escritorio) -->
+                <!-- Añadido 'flex-shrink-0' para evitar que se encoja en alto -->
+                <header class="flex items-center justify-between h-16 bg-gray-800 border-b border-gray-700 px-6 flex-shrink-0">
                     <div class="flex items-center">
                         <!-- Logo para Móvil/Header -->
                         <img src="/images/logo-escritorio.svg" alt="Arelyshop Admin" class="h-8 md:h-10 mr-4">
@@ -121,11 +121,11 @@
                     </div>
                 </header>
 
-                <!-- Mobile Title & User Info -->
-                <div class="md:hidden p-4 bg-gray-800 border-b border-gray-700">
-                    <h1 class="text-xl font-bold text-white mb-2">Gestionar Productos</h1>
-                    <div id="user-info-mobile" class="text-left">
-                        <p class="font-semibold text-sm" id="user-fullname-mobile"></p>
+                <!-- Título y Info de Usuario (Solo Móvil) -->
+                <!-- Añadido 'flex-shrink-0' también aquí -->
+                <div id="mobile-info-header" class="md:hidden flex justify-between items-center p-4 bg-gray-800 border-b border-gray-700 flex-shrink-0">
+                    <div>
+                        <h1 class="text-xl font-bold text-white">Gestionar Productos</h1>
                         <p class="text-xs text-gray-400" id="user-role-mobile"></p>
                     </div>
                 </div>
@@ -345,6 +345,3 @@
     <script src="script.js"></script>
 </body>
 </html>
-
-
-
